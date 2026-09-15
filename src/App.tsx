@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Page, MenuItem, Transaction } from './types';
-import { getMenuItems, saveMenuItems, getTransactions, saveTransactions } from './store';
+import { getMenuItems, saveMenuItems, getTransactions, addTransaction, subscribeToMenu, subscribeToTransactions, getFirebaseStatus } from './store';
 import Dashboard from './components/Dashboard';
 import MenuManagement from './components/MenuManagement';
 import TransactionPage from './components/TransactionPage';
@@ -8,7 +8,7 @@ import Reports from './components/Reports';
 import SettingsPage from './components/SettingsPage';
 import LoginPage from './components/LoginPage';
 import PromotionPage from './components/PromotionPage';
-import { LayoutDashboard, UtensilsCrossed, ShoppingCart, BarChart3, ChefHat, Settings, LogOut, Megaphone } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, ShoppingCart, BarChart3, ChefHat, Settings, LogOut, Megaphone, Wifi, WifiOff } from 'lucide-react';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [firebaseStatus, setFirebaseStatus] = useState<{ configured: boolean; mode: string }>({ configured: false, mode: 'localStorage' });
 
   // Get dynamic branding
   const getStoreName = () => {
@@ -35,14 +36,37 @@ const App: React.FC = () => {
   const storeName = getStoreName();
   const storeLogo = getStoreLogo();
 
-  // Check if user is already logged in
+  // Check if user is already logged in and setup Firebase
   useEffect(() => {
     const auth = localStorage.getItem('dapurku_auth');
     if (auth) {
       setIsLoggedIn(true);
     }
+    
+    // Load initial data from localStorage
     setMenuItems(getMenuItems());
     setTransactions(getTransactions());
+    
+    // Check Firebase status
+    const status = getFirebaseStatus();
+    setFirebaseStatus(status);
+    
+    // Setup Firebase real-time subscriptions if configured
+    if (status.configured) {
+      const unsubscribeMenu = subscribeToMenu((items) => {
+        setMenuItems(items);
+      });
+      
+      const unsubscribeTransactions = subscribeToTransactions((transactions) => {
+        setTransactions(transactions);
+      });
+      
+      // Cleanup subscriptions on unmount
+      return () => {
+        unsubscribeMenu();
+        unsubscribeTransactions();
+      };
+    }
   }, []);
 
   // Update document title and favicon dynamically
@@ -70,10 +94,13 @@ const App: React.FC = () => {
     saveMenuItems(items);
   };
 
-  const handleSaveTransaction = (transaction: Transaction) => {
+  const handleSaveTransaction = async (transaction: Transaction) => {
+    // Add to localStorage immediately for UI update
     const updated = [...transactions, transaction];
     setTransactions(updated);
-    saveTransactions(updated);
+    
+    // Save to Firebase if configured
+    await addTransaction(transaction);
   };
 
   const handleLogout = () => {
@@ -215,6 +242,21 @@ const App: React.FC = () => {
               </h2>
             </div>
             <div className="flex items-center gap-3">
+              {/* Firebase Status Indicator */}
+              <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100" title={`Database: ${firebaseStatus.mode}`}>
+                {firebaseStatus.configured ? (
+                  <>
+                    <Wifi size={14} className="text-green-600" />
+                    <span className="text-xs font-medium text-green-700">Firebase</span>
+                  </>
+                ) : (
+                  <>
+                    <WifiOff size={14} className="text-gray-500" />
+                    <span className="text-xs font-medium text-gray-600">Local</span>
+                  </>
+                )}
+              </div>
+              
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-gray-700">Admin DapurKu</p>
                 <p className="text-xs text-gray-500">{new Date().toLocaleDateString('id-ID', { weekday: 'long' })}</p>
