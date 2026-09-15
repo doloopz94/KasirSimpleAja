@@ -219,8 +219,18 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
                 })}
               </div>
 
-              <div className="total border-t-2 border-dashed border-gray-400 pt-2 mt-2">
-                <div className="total-row flex justify-between text-sm font-bold">
+              <div className="total border-t-2 border-dashed border-gray-400 pt-2 mt-2 space-y-1">
+                <div className="info-row flex justify-between text-[10px]">
+                  <span className="text-gray-500">Subtotal</span>
+                  <span>{formatCurrency(transaction.total - (transaction.deliveryFee || 0))}</span>
+                </div>
+                {(transaction.deliveryFee || 0) > 0 && (
+                  <div className="info-row flex justify-between text-[10px]">
+                    <span className="text-gray-500">Ongkos Kirim</span>
+                    <span>{formatCurrency(transaction.deliveryFee || 0)}</span>
+                  </div>
+                )}
+                <div className="total-row flex justify-between text-sm font-bold border-t border-dashed border-gray-400 pt-1">
                   <span>TOTAL</span>
                   <span className="text-green-600">{formatCurrency(transaction.total)}</span>
                 </div>
@@ -339,6 +349,11 @@ function generateReceiptText(transaction: Transaction, storeName: string): strin
   });
   
   text += `━━━━━━━━━━━━━━━\n`;
+  const subtotal = transaction.total - (transaction.deliveryFee || 0);
+  text += `Subtotal: ${formatCurrency(subtotal)}\n`;
+  if ((transaction.deliveryFee || 0) > 0) {
+    text += `Ongkir: ${formatCurrency(transaction.deliveryFee || 0)}\n`;
+  }
   text += `*TOTAL: ${formatCurrency(transaction.total)}*\n`;
   text += `Bayar: ${transaction.paymentMethod === 'qris' ? 'QRIS' : 'TUNAI'}\n`;
   

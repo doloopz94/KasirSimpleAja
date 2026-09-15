@@ -19,6 +19,7 @@ export interface Transaction {
   id: string;
   items: TransactionItem[];
   total: number;
+  deliveryFee?: number;
   customerName: string;
   customerPhone: string;
   paymentMethod: 'cash' | 'qris';
@@ -27,4 +28,4 @@ export interface Transaction {
   notes?: string;
 }
 
-export type Page = 'dashboard' | 'menu' | 'transaction' | 'reports' | 'settings';
+export type Page = 'dashboard' | 'menu' | 'transaction' | 'reports' | 'promotion' | 'settings';

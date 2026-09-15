@@ -29,6 +29,11 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
   const [step, setStep] = useState<'menu' | 'checkout'>('menu');
   const [showCartDrawer, setShowCartDrawer] = useState(false);
   
+  // Delivery fee state
+  const [deliveryFee, setDeliveryFee] = useState<number>(0);
+  const [customDeliveryFee, setCustomDeliveryFee] = useState('');
+  const [useCustomDelivery, setUseCustomDelivery] = useState(false);
+  
   // Popup state
   const [showItemPopup, setShowItemPopup] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
@@ -54,6 +59,10 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
     return sum + (price * item.quantity);
   }, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  
+  // Calculate actual delivery fee
+  const actualDeliveryFee = useCustomDelivery ? (parseInt(customDeliveryFee) || 0) : deliveryFee;
+  const grandTotal = cartTotal + actualDeliveryFee;
 
   const openItemPopup = (item: MenuItem) => {
     setSelectedItem(item);
@@ -121,7 +130,8 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
     const transaction: Transaction = {
       id: generateId(),
       items: cart,
-      total: cartTotal,
+      total: grandTotal,
+      deliveryFee: actualDeliveryFee,
       customerName: customerName || 'Pelanggan',
       customerPhone,
       paymentMethod,
@@ -140,7 +150,8 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
     const transaction: Transaction = {
       id: generateId(),
       items: cart,
-      total: cartTotal,
+      total: grandTotal,
+      deliveryFee: actualDeliveryFee,
       customerName: customerName || 'Pelanggan',
       customerPhone,
       paymentMethod: 'qris',
@@ -163,6 +174,9 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
     setNotes('');
     setStep('menu');
     setShowCartDrawer(false);
+    setDeliveryFee(0);
+    setCustomDeliveryFee('');
+    setUseCustomDelivery(false);
   };
 
   const goToCheckout = () => {
@@ -396,11 +410,102 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
                 );
               })}
             </div>
+            <div className="p-3 sm:p-4 bg-gray-50 border-t border-gray-100">
+              <div className="flex justify-between items-center text-xs sm:text-sm">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-medium text-gray-800">{formatCurrency(cartTotal)}</span>
+              </div>
+              {actualDeliveryFee > 0 && (
+                <div className="flex justify-between items-center text-xs sm:text-sm mt-1">
+                  <span className="text-gray-600">Ongkos Kirim</span>
+                  <span className="font-medium text-gray-800">{formatCurrency(actualDeliveryFee)}</span>
+                </div>
+              )}
+            </div>
             <div className="p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-t border-green-100">
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-gray-700 text-sm sm:text-base">Total Pembayaran</span>
-                <span className="text-xl sm:text-2xl font-bold text-green-600">{formatCurrency(cartTotal)}</span>
+                <span className="text-xl sm:text-2xl font-bold text-green-600">{formatCurrency(grandTotal)}</span>
               </div>
+            </div>
+          </div>
+
+          {/* Delivery Fee */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4 space-y-2 sm:space-y-3">
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2 text-sm sm:text-base">
+              <Package size={16} className="text-orange-500" />
+              Ongkos Kirim
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button
+                onClick={() => { setDeliveryFee(0); setUseCustomDelivery(false); }}
+                className={`py-2.5 px-3 rounded-xl border-2 text-xs sm:text-sm font-medium transition-all active:scale-95 ${
+                  !useCustomDelivery && deliveryFee === 0
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                }`}
+              >
+                <div className="text-base sm:text-lg mb-0.5">🆓</div>
+                Gratis
+              </button>
+              <button
+                onClick={() => { setDeliveryFee(3000); setUseCustomDelivery(false); }}
+                className={`py-2.5 px-3 rounded-xl border-2 text-xs sm:text-sm font-medium transition-all active:scale-95 ${
+                  !useCustomDelivery && deliveryFee === 3000
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                }`}
+              >
+                <div className="text-base sm:text-lg mb-0.5">🛵</div>
+                Rp 3.000
+              </button>
+              <button
+                onClick={() => { setDeliveryFee(5000); setUseCustomDelivery(false); }}
+                className={`py-2.5 px-3 rounded-xl border-2 text-xs sm:text-sm font-medium transition-all active:scale-95 ${
+                  !useCustomDelivery && deliveryFee === 5000
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                }`}
+              >
+                <div className="text-base sm:text-lg mb-0.5">🚗</div>
+                Rp 5.000
+              </button>
+              <button
+                onClick={() => { setDeliveryFee(7000); setUseCustomDelivery(false); }}
+                className={`py-2.5 px-3 rounded-xl border-2 text-xs sm:text-sm font-medium transition-all active:scale-95 ${
+                  !useCustomDelivery && deliveryFee === 7000
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                }`}
+              >
+                <div className="text-base sm:text-lg mb-0.5">🚚</div>
+                Rp 7.000
+              </button>
+            </div>
+            <div>
+              <button
+                onClick={() => setUseCustomDelivery(!useCustomDelivery)}
+                className={`w-full py-2.5 rounded-xl border-2 text-xs sm:text-sm font-medium transition-all ${
+                  useCustomDelivery
+                    ? 'border-orange-400 bg-orange-50 text-orange-700'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                }`}
+              >
+                ✏️ Isi Nominal Sendiri
+              </button>
+              {useCustomDelivery && (
+                <div className="mt-2 relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm">Rp</span>
+                  <input
+                    type="number"
+                    value={customDeliveryFee}
+                    onChange={(e) => setCustomDeliveryFee(e.target.value)}
+                    placeholder="Masukkan nominal ongkir"
+                    className="w-full pl-10 pr-4 py-2.5 border-2 border-orange-300 rounded-xl text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-orange-50"
+                    min="0"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -783,7 +888,7 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
       {/* QRIS Modal */}
       {showQRIS && (
         <QRISPayment
-          amount={cartTotal}
+          amount={grandTotal}
           customerName={customerName || 'Pelanggan'}
           onComplete={handleQRISComplete}
           onClose={() => setShowQRIS(false)}

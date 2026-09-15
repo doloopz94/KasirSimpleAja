@@ -7,7 +7,8 @@ import TransactionPage from './components/TransactionPage';
 import Reports from './components/Reports';
 import SettingsPage from './components/SettingsPage';
 import LoginPage from './components/LoginPage';
-import { LayoutDashboard, UtensilsCrossed, ShoppingCart, BarChart3, ChefHat, Settings, LogOut } from 'lucide-react';
+import PromotionPage from './components/PromotionPage';
+import { LayoutDashboard, UtensilsCrossed, ShoppingCart, BarChart3, ChefHat, Settings, LogOut, Megaphone } from 'lucide-react';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -87,10 +88,11 @@ const App: React.FC = () => {
 
   const navItems = [
     { key: 'dashboard' as Page, label: 'Dashboard', icon: LayoutDashboard },
-    { key: 'menu' as Page, label: 'Kelola Menu', icon: UtensilsCrossed },
+    { key: 'menu' as Page, label: 'Menu', icon: UtensilsCrossed },
     { key: 'transaction' as Page, label: 'Transaksi', icon: ShoppingCart },
+    { key: 'promotion' as Page, label: 'Promosi', icon: Megaphone },
     { key: 'reports' as Page, label: 'Laporan', icon: BarChart3 },
-    { key: 'settings' as Page, label: 'Pengaturan', icon: Settings },
+    { key: 'settings' as Page, label: 'Setting', icon: Settings },
   ];
 
   const renderPage = () => {
@@ -101,6 +103,8 @@ const App: React.FC = () => {
         return <MenuManagement menuItems={menuItems} onSave={handleSaveMenu} />;
       case 'transaction':
         return <TransactionPage menuItems={menuItems} transactions={transactions} onSaveTransaction={handleSaveTransaction} />;
+      case 'promotion':
+        return <PromotionPage menuItems={menuItems} />;
       case 'reports':
         return <Reports transactions={transactions} />;
       case 'settings':
