@@ -6,19 +6,63 @@ import MenuManagement from './components/MenuManagement';
 import TransactionPage from './components/TransactionPage';
 import Reports from './components/Reports';
 import SettingsPage from './components/SettingsPage';
+import LoginPage from './components/LoginPage';
 import { LayoutDashboard, UtensilsCrossed, ShoppingCart, BarChart3, ChefHat, Settings, LogOut } from 'lucide-react';
 
 const App: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
+  // Get dynamic branding
+  const getStoreName = () => {
+    const saved = localStorage.getItem('dapurku_settings');
+    if (saved) {
+      const settings = JSON.parse(saved);
+      return settings.storeName || 'DapurKu';
+    }
+    return 'DapurKu';
+  };
+
+  const getStoreLogo = () => {
+    return localStorage.getItem('dapurku_logo') || '';
+  };
+
+  const storeName = getStoreName();
+  const storeLogo = getStoreLogo();
+
+  // Check if user is already logged in
   useEffect(() => {
+    const auth = localStorage.getItem('dapurku_auth');
+    if (auth) {
+      setIsLoggedIn(true);
+    }
     setMenuItems(getMenuItems());
     setTransactions(getTransactions());
   }, []);
+
+  // Update document title and favicon dynamically
+  useEffect(() => {
+    document.title = `${storeName} - Sistem Manajemen Penjualan`;
+    
+    // Update favicon if logo exists
+    if (storeLogo) {
+      let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = storeLogo;
+    }
+  }, [storeName, storeLogo]);
+
+  const handleLogin = (username: string) => {
+    setIsLoggedIn(true);
+  };
 
   const handleSaveMenu = (items: MenuItem[]) => {
     setMenuItems(items);
@@ -32,9 +76,14 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
-    window.location.reload();
+    localStorage.removeItem('dapurku_auth');
+    setIsLoggedIn(false);
   };
+
+  // Show login page if not logged in
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
 
   const navItems = [
     { key: 'dashboard' as Page, label: 'Dashboard', icon: LayoutDashboard },
@@ -77,11 +126,19 @@ const App: React.FC = () => {
       }`}>
         <div className="p-5 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
-              <ChefHat size={22} className="text-white" />
-            </div>
+            {storeLogo ? (
+              <img 
+                src={storeLogo} 
+                alt={storeName}
+                className="w-10 h-10 rounded-xl object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+                <ChefHat size={22} className="text-white" />
+              </div>
+            )}
             <div>
-              <h1 className="font-bold text-gray-800 text-lg">DapurKu</h1>
+              <h1 className="font-bold text-gray-800 text-lg">{storeName}</h1>
               <p className="text-xs text-gray-500">Makanan Rumahan</p>
             </div>
           </div>
@@ -160,10 +217,14 @@ const App: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowLogoutConfirm(true)}
-                className="w-9 h-9 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm hover:shadow-lg transition-all active:scale-95"
+                className="w-9 h-9 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm hover:shadow-lg transition-all active:scale-95 overflow-hidden"
                 title="Klik untuk logout"
               >
-                A
+                {storeLogo ? (
+                  <img src={storeLogo} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  'A'
+                )}
               </button>
             </div>
           </div>

@@ -15,6 +15,7 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const receiptText = generateReceiptText(transaction, storeName);
+  const storeLogo = localStorage.getItem('dapurku_logo') || '';
 
   const handleWhatsApp = () => {
     const phone = transaction.customerPhone?.replace(/\D/g, '');
@@ -168,6 +169,13 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
           <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
             <div ref={receiptRef} className="font-mono text-xs">
               <div className="header text-center border-b-2 border-dashed border-gray-400 pb-3 mb-3">
+                {storeLogo && (
+                  <img 
+                    src={storeLogo} 
+                    alt={storeName}
+                    className="w-16 h-16 mx-auto mb-2 object-contain"
+                  />
+                )}
                 <h1 className="text-lg font-bold text-gray-800">{storeName}</h1>
                 <p className="text-gray-500 text-[10px]">Makanan Rumahan Online</p>
               </div>

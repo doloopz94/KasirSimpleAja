@@ -5,6 +5,7 @@ interface SettingsData {
   storeName: string;
   storeAddress: string;
   storePhone: string;
+  storeLogo: string;
   qrisMerchantName: string;
   qrisMerchantId: string;
   qrisAmount: string;
@@ -25,6 +26,7 @@ const defaultSettings: SettingsData = {
   storeName: 'DapurKu',
   storeAddress: 'Jl. Contoh No. 123, Jakarta',
   storePhone: '0812-3456-7890',
+  storeLogo: '',
   qrisMerchantName: 'DAPURKU FOOD',
   qrisMerchantId: 'ID1023456789',
   qrisAmount: '',
@@ -55,6 +57,37 @@ const SettingsPage: React.FC = () => {
     localStorage.setItem('dapurku_settings', JSON.stringify(settings));
     setShowSaveSuccess(true);
     setTimeout(() => setShowSaveSuccess(false), 2000);
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Ukuran file terlalu besar. Maksimal 2MB.');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('File harus berupa gambar.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setSettings({ ...settings, storeLogo: base64 });
+      // Also save to separate localStorage key for easy access
+      localStorage.setItem('dapurku_logo', base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setSettings({ ...settings, storeLogo: '' });
+    localStorage.removeItem('dapurku_logo');
   };
 
   const handleLogout = () => {
@@ -113,6 +146,64 @@ const SettingsPage: React.FC = () => {
                 <h3 className="font-semibold text-gray-800">Admin DapurKu</h3>
                 <p className="text-xs text-gray-500">admin@dapurku.com</p>
               </div>
+            </div>
+
+            {/* Upload Logo Section */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <Store size={14} className="inline mr-1.5" />
+                Logo Toko
+              </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-400 transition-colors">
+                {settings.storeLogo ? (
+                  <div className="space-y-3">
+                    <img 
+                      src={settings.storeLogo} 
+                      alt="Logo" 
+                      className="w-24 h-24 mx-auto rounded-xl object-cover shadow-md"
+                    />
+                    <div className="flex gap-2 justify-center">
+                      <label className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium cursor-pointer transition-colors">
+                        Ganti Logo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        onClick={handleRemoveLogo}
+                        className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                      <Store size={32} className="text-gray-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Upload Logo Toko</p>
+                      <p className="text-xs text-gray-500 mt-1">PNG, JPG, atau JPEG (Max 2MB)</p>
+                    </div>
+                    <label className="inline-block px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium cursor-pointer transition-colors">
+                      Pilih File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Logo akan ditampilkan di halaman login dan struk/nota
+              </p>
             </div>
 
             <div>
