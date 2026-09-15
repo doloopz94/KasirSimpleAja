@@ -5,13 +5,15 @@ import Dashboard from './components/Dashboard';
 import MenuManagement from './components/MenuManagement';
 import TransactionPage from './components/TransactionPage';
 import Reports from './components/Reports';
-import { LayoutDashboard, UtensilsCrossed, ShoppingCart, BarChart3, ChefHat } from 'lucide-react';
+import SettingsPage from './components/SettingsPage';
+import { LayoutDashboard, UtensilsCrossed, ShoppingCart, BarChart3, ChefHat, Settings, LogOut } from 'lucide-react';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     setMenuItems(getMenuItems());
@@ -29,11 +31,17 @@ const App: React.FC = () => {
     saveTransactions(updated);
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
+
   const navItems = [
     { key: 'dashboard' as Page, label: 'Dashboard', icon: LayoutDashboard },
     { key: 'menu' as Page, label: 'Kelola Menu', icon: UtensilsCrossed },
     { key: 'transaction' as Page, label: 'Transaksi', icon: ShoppingCart },
     { key: 'reports' as Page, label: 'Laporan', icon: BarChart3 },
+    { key: 'settings' as Page, label: 'Pengaturan', icon: Settings },
   ];
 
   const renderPage = () => {
@@ -46,6 +54,8 @@ const App: React.FC = () => {
         return <TransactionPage menuItems={menuItems} transactions={transactions} onSaveTransaction={handleSaveTransaction} />;
       case 'reports':
         return <Reports transactions={transactions} />;
+      case 'settings':
+        return <SettingsPage />;
       default:
         return <Dashboard transactions={transactions} menuItems={menuItems} />;
     }
@@ -106,7 +116,18 @@ const App: React.FC = () => {
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+        {/* Logout Button in Sidebar */}
+        <div className="absolute bottom-16 lg:bottom-0 left-0 right-0 p-3 border-t border-gray-100">
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all text-red-600 hover:bg-red-50"
+          >
+            <LogOut size={20} />
+            <span className="text-sm font-medium">Logout</span>
+          </button>
+        </div>
+
+        <div className="absolute bottom-16 lg:bottom-16 left-0 right-0 p-4">
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3">
             <p className="text-xs text-green-700 font-medium">💡 Tips</p>
             <p className="text-xs text-green-600 mt-1">Gunakan QRIS untuk pembayaran lebih cepat dan aman!</p>
@@ -137,9 +158,13 @@ const App: React.FC = () => {
                 <p className="text-sm font-medium text-gray-700">Admin DapurKu</p>
                 <p className="text-xs text-gray-500">{new Date().toLocaleDateString('id-ID', { weekday: 'long' })}</p>
               </div>
-              <div className="w-9 h-9 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+              <button
+                onClick={() => setShowLogoutConfirm(true)}
+                className="w-9 h-9 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm hover:shadow-lg transition-all active:scale-95"
+                title="Klik untuk logout"
+              >
                 A
-              </div>
+              </button>
             </div>
           </div>
         </header>
@@ -171,6 +196,38 @@ const App: React.FC = () => {
           })}
         </div>
       </nav>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={() => setShowLogoutConfirm(false)} />
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-sm mx-auto bg-white rounded-2xl z-50 shadow-2xl p-6 animate-fadeIn">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <LogOut size={32} className="text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Konfirmasi Logout</h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Anda akan keluar dari aplikasi. Semua data lokal akan dihapus. Lanjutkan?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

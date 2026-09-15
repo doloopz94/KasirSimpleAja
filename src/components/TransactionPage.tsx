@@ -280,8 +280,8 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
                   onClick={() => openItemPopup(item)}
                 >
                   {/* Card Top - Clickable Image Area */}
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-3 sm:p-4 text-center relative active:scale-95 transition-transform">
-                    <span className="text-3xl sm:text-4xl">{categoryEmojis[item.category] || '🍽️'}</span>
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-2.5 sm:p-3 text-center relative active:scale-95 transition-transform">
+                    <span className="text-2xl sm:text-3xl">{categoryEmojis[item.category] || '🍽️'}</span>
                     {qty > 0 && (
                       <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-green-500 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold shadow-sm">
                         {qty}
@@ -527,9 +527,9 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
               {/* Header - Fixed Height, No Shrink */}
               <div className="popup-header flex-shrink-0 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 pt-6 pb-4 px-5 sm:pt-8 sm:pb-6 sm:px-6">
                 <div className="flex flex-col items-center text-center">
-                  {/* Emoji Icon */}
-                  <div className="emoji-icon w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-3 sm:mb-4">
-                    <span className="text-4xl sm:text-5xl">{categoryEmojis[selectedItem.category] || '🍽️'}</span>
+                  {/* Emoji Icon - Smaller Size */}
+                  <div className="emoji-icon w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-xl shadow-md flex items-center justify-center mb-2 sm:mb-3">
+                    <span className="text-2xl sm:text-3xl">{categoryEmojis[selectedItem.category] || '🍽️'}</span>
                   </div>
                   
                   {/* Title & Description */}

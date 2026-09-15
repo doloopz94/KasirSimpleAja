@@ -27,4 +27,4 @@ export interface Transaction {
   notes?: string;
 }
 
-export type Page = 'dashboard' | 'menu' | 'transaction' | 'reports';
+export type Page = 'dashboard' | 'menu' | 'transaction' | 'reports' | 'settings';
