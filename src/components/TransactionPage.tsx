@@ -486,165 +486,190 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
         </div>
       )}
 
-      {/* Item Popup Modal - Responsive & Clean */}
+      {/* Item Popup Modal - Fully Responsive */}
       {showItemPopup && selectedItem && (
         <>
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity" onClick={closeItemPopup} />
-          <div className="fixed inset-x-0 bottom-0 sm:inset-x-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md w-full sm:rounded-3xl rounded-t-3xl z-50 bg-white shadow-2xl animate-slideUp sm:animate-fadeIn overflow-hidden max-h-[90vh] sm:max-h-[90vh] flex flex-col">
-            
-            {/* Close Button - Top Right */}
-            <button
-              onClick={closeItemPopup}
-              className="absolute top-4 right-4 z-10 w-8 h-8 bg-white/90 backdrop-blur-sm hover:bg-gray-100 rounded-full flex items-center justify-center shadow-md transition-all active:scale-90"
-              aria-label="Tutup"
-            >
-              <X size={18} className="text-gray-600" />
-            </button>
-
-            {/* Header Section - Clean & Minimal */}
-            <div className="relative bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 pt-8 pb-6 px-6 flex-shrink-0">
-              <div className="flex flex-col items-center text-center">
-                {/* Emoji Icon */}
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-4">
-                  <span className="text-5xl sm:text-6xl">{categoryEmojis[selectedItem.category] || '🍽️'}</span>
-                </div>
-                
-                {/* Title & Description */}
-                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">{selectedItem.name}</h3>
-                <p className="text-sm text-gray-600 max-w-xs">{selectedItem.description}</p>
-                
-                {/* Category Badge */}
-                <div className="mt-3 inline-flex items-center gap-1.5 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm">
-                  <span className="text-xs">{categoryEmojis[selectedItem.category]}</span>
-                  <span className="text-xs font-medium text-gray-700">{selectedItem.category}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Body Section - Scrollable Content */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity" 
+            onClick={closeItemPopup} 
+          />
+          
+          {/* Popup Container - Responsive Positioning */}
+          <div className="fixed z-50 
+            /* Mobile: Bottom Sheet */
+            inset-x-0 bottom-0 
+            /* Tablet & Desktop: Centered Modal */
+            sm:inset-0 sm:flex sm:items-center sm:justify-center sm:p-4
+          ">
+            <div className="popup-container bg-white w-full 
+              /* Mobile: Bottom sheet with rounded top */
+              rounded-t-3xl
+              /* Tablet & Desktop: Fully rounded */
+              sm:rounded-3xl
+              /* Width constraints */
+              sm:max-w-md md:max-w-lg
+              /* Shadow & Animation */
+              shadow-2xl animate-slideUp sm:animate-fadeIn
+              /* Critical: Flex column with overflow control */
+              flex flex-col overflow-hidden
+            ">
               
-              {/* Quantity Section */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-3">
-                  Jumlah Pesanan
-                </label>
-                <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-1.5">
-                  <button
-                    onClick={() => setPopupQuantity(Math.max(1, popupQuantity - 1))}
-                    disabled={popupQuantity <= 1}
-                    className="flex-1 h-12 flex items-center justify-center bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-all active:scale-95 shadow-sm"
-                  >
-                    <Minus size={20} className="text-gray-700" />
-                  </button>
-                  <div className="flex-1 text-center">
-                    <input
-                      type="number"
-                      value={popupQuantity}
-                      onChange={(e) => setPopupQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-full text-center text-2xl font-bold text-gray-900 bg-transparent border-none focus:outline-none"
-                      min="1"
-                    />
-                    <p className="text-xs text-gray-500 -mt-1">porsi</p>
+              {/* Close Button */}
+              <button
+                onClick={closeItemPopup}
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-8 h-8 bg-white/90 backdrop-blur-sm hover:bg-gray-100 rounded-full flex items-center justify-center shadow-md transition-all active:scale-90"
+                aria-label="Tutup"
+              >
+                <X size={18} className="text-gray-600" />
+              </button>
+
+              {/* Header - Fixed Height, No Shrink */}
+              <div className="popup-header flex-shrink-0 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 pt-6 pb-4 px-5 sm:pt-8 sm:pb-6 sm:px-6">
+                <div className="flex flex-col items-center text-center">
+                  {/* Emoji Icon */}
+                  <div className="emoji-icon w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center mb-3 sm:mb-4">
+                    <span className="text-4xl sm:text-5xl">{categoryEmojis[selectedItem.category] || '🍽️'}</span>
                   </div>
-                  <button
-                    onClick={() => setPopupQuantity(popupQuantity + 1)}
-                    className="flex-1 h-12 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white rounded-xl transition-all active:scale-95 shadow-sm"
-                  >
-                    <Plus size={20} />
-                  </button>
+                  
+                  {/* Title & Description */}
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 line-clamp-2">{selectedItem.name}</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 max-w-sm line-clamp-2">{selectedItem.description}</p>
+                  
+                  {/* Category Badge */}
+                  <div className="mt-2 sm:mt-3 inline-flex items-center gap-1.5 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
+                    <span className="text-xs">{categoryEmojis[selectedItem.category]}</span>
+                    <span className="text-xs font-medium text-gray-700">{selectedItem.category}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Price Section */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-semibold text-gray-800">
-                    Harga Satuan
+              {/* Body - Scrollable with min-h-0 (CRITICAL for flex scroll) */}
+              <div className="popup-body popup-scroll flex-1 min-h-0 px-5 py-4 sm:px-6 sm:py-5 space-y-4 sm:space-y-5">
+                
+                {/* Quantity Section */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2 sm:mb-3">
+                    Jumlah Pesanan
                   </label>
-                  <button
-                    onClick={() => {
-                      setUseCustomPrice(!useCustomPrice);
-                      if (!useCustomPrice) {
-                        setPopupPrice(selectedItem.price);
-                      }
-                    }}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                      useCustomPrice 
-                        ? 'bg-orange-500 text-white shadow-sm' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    <Tag size={12} />
-                    {useCustomPrice ? 'Harga Khusus Aktif' : 'Ubah Harga'}
-                  </button>
-                </div>
-
-                {useCustomPrice ? (
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">Rp</span>
+                  <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-1.5">
+                    <button
+                      onClick={() => setPopupQuantity(Math.max(1, popupQuantity - 1))}
+                      disabled={popupQuantity <= 1}
+                      className="flex-1 h-11 sm:h-12 flex items-center justify-center bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-all active:scale-95 shadow-sm"
+                    >
+                      <Minus size={18} className="text-gray-700" />
+                    </button>
+                    <div className="flex-1 text-center">
                       <input
                         type="number"
-                        value={popupPrice}
-                        onChange={(e) => setPopupPrice(parseInt(e.target.value) || 0)}
-                        className="w-full pl-12 pr-4 py-3.5 border-2 border-orange-300 rounded-2xl text-lg font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-orange-50"
-                        min="0"
+                        value={popupQuantity}
+                        onChange={(e) => setPopupQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-full text-center text-xl sm:text-2xl font-bold text-gray-900 bg-transparent border-none focus:outline-none"
+                        min="1"
                       />
+                      <p className="text-xs text-gray-500 -mt-1">porsi</p>
                     </div>
-                    <p className="text-xs text-orange-600 flex items-center gap-1.5 pl-1">
+                    <button
+                      onClick={() => setPopupQuantity(popupQuantity + 1)}
+                      className="flex-1 h-11 sm:h-12 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white rounded-xl transition-all active:scale-95 shadow-sm"
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Price Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-2 sm:mb-3">
+                    <label className="text-sm font-semibold text-gray-800">
+                      Harga Satuan
+                    </label>
+                    <button
+                      onClick={() => {
+                        setUseCustomPrice(!useCustomPrice);
+                        if (!useCustomPrice) {
+                          setPopupPrice(selectedItem.price);
+                        }
+                      }}
+                      className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        useCustomPrice 
+                          ? 'bg-orange-500 text-white shadow-sm' 
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
                       <Tag size={12} />
-                      Harga normal: <span className="font-semibold">{formatCurrency(selectedItem.price)}</span>
+                      <span className="hidden xs:inline">{useCustomPrice ? 'Harga Khusus Aktif' : 'Ubah Harga'}</span>
+                      <span className="xs:hidden">{useCustomPrice ? 'Aktif' : 'Ubah'}</span>
+                    </button>
+                  </div>
+
+                  {useCustomPrice ? (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-sm sm:text-base">Rp</span>
+                        <input
+                          type="number"
+                          value={popupPrice}
+                          onChange={(e) => setPopupPrice(parseInt(e.target.value) || 0)}
+                          className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-3.5 border-2 border-orange-300 rounded-2xl text-base sm:text-lg font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-orange-50"
+                          min="0"
+                        />
+                      </div>
+                      <p className="text-xs text-orange-600 flex items-center gap-1.5 pl-1">
+                        <Tag size={12} />
+                        Harga normal: <span className="font-semibold">{formatCurrency(selectedItem.price)}</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-3 sm:p-4 text-center">
+                      <p className="text-2xl sm:text-3xl font-bold text-green-600">{formatCurrency(selectedItem.price)}</p>
+                      <p className="text-xs text-green-700 mt-1 font-medium">Harga standar</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Notes Section */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    Catatan Khusus
+                    <span className="text-gray-400 font-normal ml-1">(opsional)</span>
+                  </label>
+                  <textarea
+                    value={popupNotes}
+                    onChange={(e) => setPopupNotes(e.target.value)}
+                    placeholder="Contoh: Pedas sedang, tanpa bawang, extra sambal..."
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent resize-none"
+                    rows={2}
+                  />
+                </div>
+
+                {/* Total Preview - Highlighted */}
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-3 sm:p-4 shadow-lg">
+                  <div className="flex justify-between items-center gap-3">
+                    <div className="text-white/90 min-w-0">
+                      <p className="text-xs font-medium mb-0.5">Total Pembayaran</p>
+                      <p className="text-xs opacity-80 truncate">
+                        {popupQuantity} × {formatCurrency(useCustomPrice ? popupPrice : selectedItem.price)}
+                      </p>
+                    </div>
+                    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white flex-shrink-0">
+                      {formatCurrency((useCustomPrice ? popupPrice : selectedItem.price) * popupQuantity)}
                     </p>
                   </div>
-                ) : (
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-4 text-center">
-                    <p className="text-3xl font-bold text-green-600">{formatCurrency(selectedItem.price)}</p>
-                    <p className="text-xs text-green-700 mt-1 font-medium">Harga standar</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Notes Section */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  Catatan Khusus
-                  <span className="text-gray-400 font-normal ml-1">(opsional)</span>
-                </label>
-                <textarea
-                  value={popupNotes}
-                  onChange={(e) => setPopupNotes(e.target.value)}
-                  placeholder="Contoh: Pedas sedang, tanpa bawang, extra sambal..."
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent resize-none"
-                  rows={2}
-                />
-              </div>
-
-              {/* Total Preview - Highlighted */}
-              <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-4 shadow-lg">
-                <div className="flex justify-between items-center">
-                  <div className="text-white/90">
-                    <p className="text-xs font-medium mb-0.5">Total Pembayaran</p>
-                    <p className="text-xs opacity-80">
-                      {popupQuantity} × {formatCurrency(useCustomPrice ? popupPrice : selectedItem.price)}
-                    </p>
-                  </div>
-                  <p className="text-2xl sm:text-3xl font-bold text-white">
-                    {formatCurrency((useCustomPrice ? popupPrice : selectedItem.price) * popupQuantity)}
-                  </p>
                 </div>
               </div>
-            </div>
 
-            {/* Footer - Fixed Action Button */}
-            <div className="px-6 py-4 border-t border-gray-100 bg-white flex-shrink-0 pb-safe">
-              <button
-                onClick={addToCartFromPopup}
-                className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl font-bold text-base flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-green-200/50 active:scale-[0.98]"
-              >
-                <ShoppingCart size={20} />
-                Tambah ke Keranjang
-              </button>
+              {/* Footer - Fixed Height, No Shrink */}
+              <div className="flex-shrink-0 px-5 py-3 sm:px-6 sm:py-4 border-t border-gray-100 bg-white pb-safe">
+                <button
+                  onClick={addToCartFromPopup}
+                  className="w-full py-3 sm:py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 sm:gap-2.5 transition-all shadow-lg shadow-green-200/50 active:scale-[0.98]"
+                >
+                  <ShoppingCart size={18} />
+                  Tambah ke Keranjang
+                </button>
+              </div>
             </div>
           </div>
         </>

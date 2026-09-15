@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --breakpoint-xs: 375px;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -33,21 +37,7 @@
 
 /* Safe area padding for bottom sheets */
 .pb-safe {
-  padding-bottom: max(1rem, env(safe-area-inset-bottom));
-}
-
-/* Responsive text sizing */
-@media (max-width: 640px) {
-  .text-responsive {
-    font-size: 0.875rem;
-  }
-}
-
-/* Better touch targets on mobile */
-@media (max-width: 640px) {
-  button, a {
-    min-height: 36px;
-  }
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
 /* Prevent zoom on input focus on iOS */
@@ -55,6 +45,78 @@
   input, select, textarea {
     font-size: 16px !important;
   }
+}
+
+/* Dynamic viewport height for mobile */
+.popup-container {
+  max-height: 92dvh;
+  height: 100%;
+}
+
+@media (min-width: 640px) {
+  .popup-container {
+    max-height: 90dvh;
+    max-height: 90vh;
+  }
+}
+
+/* Landscape mode adjustments */
+@media (max-height: 500px) and (orientation: landscape) {
+  .popup-container {
+    max-height: 95dvh;
+    max-height: 95vh;
+  }
+  
+  .popup-header {
+    padding-top: 1rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+  
+  .popup-header .emoji-icon {
+    width: 4rem !important;
+    height: 4rem !important;
+  }
+  
+  .popup-header .emoji-icon span {
+    font-size: 2.5rem !important;
+  }
+  
+  .popup-body {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+  
+  .popup-body > * + * {
+    margin-top: 0.5rem !important;
+  }
+}
+
+/* Small mobile (320px - 375px) */
+@media (max-width: 375px) {
+  .popup-container {
+    max-height: 95dvh;
+  }
+}
+
+/* Ensure proper scroll behavior */
+.popup-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Hide scrollbar but keep functionality */
+.popup-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.popup-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.popup-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
 }
 
 /* Animation */
