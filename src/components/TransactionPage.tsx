@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MenuItem, Transaction, TransactionItem } from '../types';
 import { formatCurrency, generateId } from '../store';
-import { ShoppingCart, Plus, Minus, Trash2, User, Phone, CreditCard, Banknote, CheckCircle, Search, ChevronRight, ArrowLeft, X, Package, Sparkles } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, User, Phone, CreditCard, Banknote, CheckCircle, Search, ChevronRight, ArrowLeft, X, Package, Sparkles, Edit3, Tag } from 'lucide-react';
 import QRISPayment from './QRISPayment';
 
 interface Props {
@@ -10,8 +10,12 @@ interface Props {
   onSaveTransaction: (transaction: Transaction) => void;
 }
 
+interface CartItem extends TransactionItem {
+  customPrice?: number;
+}
+
 const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTransaction }) => {
-  const [cart, setCart] = useState<TransactionItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [notes, setNotes] = useState('');
@@ -21,6 +25,14 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
   const [activeCategory, setActiveCategory] = useState('Semua');
   const [step, setStep] = useState<'menu' | 'cart' | 'checkout'>('menu');
   const [showCartDrawer, setShowCartDrawer] = useState(false);
+  
+  // Popup state
+  const [showItemPopup, setShowItemPopup] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [popupQuantity, setPopupQuantity] = useState(1);
+  const [popupPrice, setPopupPrice] = useState(0);
+  const [popupNotes, setPopupNotes] = useState('');
+  const [useCustomPrice, setUseCustomPrice] = useState(false);
 
   const categories = ['Semua', ...new Set(menuItems.filter(m => m.available).map(m => m.category))];
   
@@ -30,35 +42,66 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
     return matchSearch && matchCategory && item.available;
   });
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
+  const cartTotal = cart.reduce((sum, item) => {
+    const price = item.customPrice || item.menuItem.price;
+    return sum + (price * item.quantity);
+  }, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const addToCart = (menuItem: MenuItem) => {
-    const existing = cart.find(item => item.menuItem.id === menuItem.id);
-    if (existing) {
-      setCart(cart.map(item =>
-        item.menuItem.id === menuItem.id
-          ? { ...item, quantity: item.quantity + 1, subtotal: (item.quantity + 1) * item.menuItem.price }
-          : item
-      ));
-    } else {
-      setCart([...cart, { menuItem, quantity: 1, subtotal: menuItem.price }]);
-    }
+  const openItemPopup = (item: MenuItem) => {
+    setSelectedItem(item);
+    setPopupQuantity(1);
+    setPopupPrice(item.price);
+    setPopupNotes('');
+    setUseCustomPrice(false);
+    setShowItemPopup(true);
   };
 
-  const updateQuantity = (menuItemId: string, delta: number) => {
-    setCart(cart.map(item => {
-      if (item.menuItem.id === menuItemId) {
+  const closeItemPopup = () => {
+    setShowItemPopup(false);
+    setSelectedItem(null);
+  };
+
+  const addToCartFromPopup = () => {
+    if (!selectedItem) return;
+
+    const finalPrice = useCustomPrice ? popupPrice : selectedItem.price;
+    const cartId = `${selectedItem.id}-${Date.now()}`;
+    
+    const newItem: CartItem = {
+      menuItem: selectedItem,
+      quantity: popupQuantity,
+      subtotal: finalPrice * popupQuantity,
+      customPrice: useCustomPrice ? finalPrice : undefined,
+    };
+
+    setCart([...cart, newItem]);
+    closeItemPopup();
+  };
+
+  const updateQuantity = (index: number, delta: number) => {
+    setCart(cart.map((item, idx) => {
+      if (idx === index) {
         const newQty = item.quantity + delta;
         if (newQty <= 0) return null as any;
-        return { ...item, quantity: newQty, subtotal: newQty * item.menuItem.price };
+        const price = item.customPrice || item.menuItem.price;
+        return { ...item, quantity: newQty, subtotal: price * newQty };
       }
       return item;
     }).filter(Boolean));
   };
 
-  const removeFromCart = (menuItemId: string) => {
-    setCart(cart.filter(item => item.menuItem.id !== menuItemId));
+  const updateCartItemPrice = (index: number, newPrice: number) => {
+    setCart(cart.map((item, idx) => {
+      if (idx === index) {
+        return { ...item, customPrice: newPrice, subtotal: newPrice * item.quantity };
+      }
+      return item;
+    }));
+  };
+
+  const removeFromCart = (index: number) => {
+    setCart(cart.filter((_, idx) => idx !== index));
   };
 
   const clearCart = () => {
@@ -66,7 +109,7 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
   };
 
   const getCartQty = (menuItemId: string) => {
-    return cart.find(item => item.menuItem.id === menuItemId)?.quantity || 0;
+    return cart.filter(item => item.menuItem.id === menuItemId).reduce((sum, item) => sum + item.quantity, 0);
   };
 
   const handleSubmit = (paymentMethod: 'cash' | 'qris') => {
@@ -127,6 +170,10 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
   const goToCheckout = () => {
     setShowCartDrawer(false);
     setStep('checkout');
+  };
+
+  const scrollToCart = () => {
+    setShowCartDrawer(true);
   };
 
   const categoryEmojis: Record<string, string> = {
@@ -244,31 +291,26 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
                     <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{item.description}</p>
                     <p className="text-green-600 font-bold text-sm mt-2">{formatCurrency(item.price)}</p>
                     
-                    {qty === 0 ? (
-                      <button
-                        onClick={() => addToCart(item)}
-                        className="w-full mt-2 py-2 bg-green-50 hover:bg-green-500 text-green-600 hover:text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all"
-                      >
-                        <Plus size={14} />
-                        Tambah
-                      </button>
-                    ) : (
-                      <div className="flex items-center justify-between mt-2 bg-green-50 rounded-lg p-1">
-                        <button
-                          onClick={() => updateQuantity(item.id, -1)}
-                          className="w-8 h-8 flex items-center justify-center bg-white hover:bg-red-50 text-green-600 hover:text-red-500 rounded-md transition-colors shadow-sm"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="font-bold text-green-700 text-sm">{qty}</span>
-                        <button
-                          onClick={() => updateQuantity(item.id, 1)}
-                          className="w-8 h-8 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors shadow-sm"
-                        >
+                    <button
+                      onClick={() => openItemPopup(item)}
+                      className={`w-full mt-2 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all ${
+                        qty > 0 
+                          ? 'bg-green-500 hover:bg-green-600 text-white'
+                          : 'bg-green-50 hover:bg-green-500 text-green-600 hover:text-white'
+                      }`}
+                    >
+                      {qty > 0 ? (
+                        <>
+                          <Edit3 size={14} />
+                          Edit ({qty})
+                        </>
+                      ) : (
+                        <>
                           <Plus size={14} />
-                        </button>
-                      </div>
-                    )}
+                          Tambah
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               );
@@ -287,7 +329,7 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
           {cartCount > 0 && (
             <div className="fixed bottom-20 lg:bottom-6 left-4 right-4 lg:left-auto lg:right-6 lg:w-80 z-20">
               <button
-                onClick={() => setShowCartDrawer(true)}
+                onClick={scrollToCart}
                 className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-2xl p-4 shadow-xl shadow-green-200 flex items-center justify-between transition-all transform hover:-translate-y-0.5"
               >
                 <div className="flex items-center gap-3">
@@ -321,20 +363,26 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
               </h3>
             </div>
             <div className="divide-y divide-gray-50">
-              {cart.map(item => (
-                <div key={item.menuItem.id} className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{categoryEmojis[item.menuItem.category] || '🍽️'}</span>
-                    <div>
-                      <p className="font-medium text-gray-800">{item.menuItem.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {formatCurrency(item.menuItem.price)} × {item.quantity}
-                      </p>
+              {cart.map((item, idx) => {
+                const price = item.customPrice || item.menuItem.price;
+                return (
+                  <div key={idx} className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{categoryEmojis[item.menuItem.category] || '🍽️'}</span>
+                      <div>
+                        <p className="font-medium text-gray-800">{item.menuItem.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {formatCurrency(price)} × {item.quantity}
+                          {item.customPrice && (
+                            <span className="ml-1 text-xs text-orange-600">(Harga khusus)</span>
+                          )}
+                        </p>
+                      </div>
                     </div>
+                    <p className="font-semibold text-gray-800">{formatCurrency(price * item.quantity)}</p>
                   </div>
-                  <p className="font-semibold text-gray-800">{formatCurrency(item.subtotal)}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-t border-green-100">
               <div className="flex justify-between items-center">
@@ -426,6 +474,148 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
         </div>
       )}
 
+      {/* Item Popup Modal */}
+      {showItemPopup && selectedItem && (
+        <>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={closeItemPopup} />
+          <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-white rounded-2xl z-50 shadow-2xl animate-fadeIn overflow-hidden">
+            {/* Popup Header */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 text-center relative">
+              <button
+                onClick={closeItemPopup}
+                className="absolute top-3 right-3 p-1.5 bg-white/80 hover:bg-white rounded-full shadow-sm"
+              >
+                <X size={18} className="text-gray-600" />
+              </button>
+              <span className="text-6xl">{categoryEmojis[selectedItem.category] || '🍽️'}</span>
+              <h3 className="text-xl font-bold text-gray-800 mt-3">{selectedItem.name}</h3>
+              <p className="text-sm text-gray-500 mt-1">{selectedItem.description}</p>
+            </div>
+
+            {/* Popup Body */}
+            <div className="p-6 space-y-5">
+              {/* Quantity Selector */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Jumlah Porsi
+                </label>
+                <div className="flex items-center justify-between bg-gray-50 rounded-xl p-2">
+                  <button
+                    onClick={() => setPopupQuantity(Math.max(1, popupQuantity - 1))}
+                    className="w-12 h-12 flex items-center justify-center bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-xl transition-colors shadow-sm"
+                  >
+                    <Minus size={20} className="text-gray-600" />
+                  </button>
+                  <div className="text-center">
+                    <input
+                      type="number"
+                      value={popupQuantity}
+                      onChange={(e) => setPopupQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-20 text-center text-2xl font-bold text-gray-800 bg-transparent border-none focus:outline-none"
+                      min="1"
+                    />
+                    <p className="text-xs text-gray-500">porsi</p>
+                  </div>
+                  <button
+                    onClick={() => setPopupQuantity(popupQuantity + 1)}
+                    className="w-12 h-12 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors shadow-sm"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Price Section */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Harga per Porsi
+                  </label>
+                  <button
+                    onClick={() => {
+                      setUseCustomPrice(!useCustomPrice);
+                      if (!useCustomPrice) {
+                        setPopupPrice(selectedItem.price);
+                      }
+                    }}
+                    className={`text-xs px-3 py-1 rounded-full font-medium transition-colors ${
+                      useCustomPrice 
+                        ? 'bg-orange-100 text-orange-700' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <Tag size={12} className="inline mr-1" />
+                    {useCustomPrice ? 'Harga Khusus Aktif' : 'Ubah Harga'}
+                  </button>
+                </div>
+
+                {useCustomPrice ? (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">Rp</span>
+                      <input
+                        type="number"
+                        value={popupPrice}
+                        onChange={(e) => setPopupPrice(parseInt(e.target.value) || 0)}
+                        className="w-full pl-12 pr-4 py-3 border-2 border-orange-200 rounded-xl text-lg font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-orange-50"
+                        min="0"
+                      />
+                    </div>
+                    <p className="text-xs text-orange-600 flex items-center gap-1">
+                      <Tag size={12} />
+                      Harga dasar: {formatCurrency(selectedItem.price)}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-green-50 border-2 border-green-200 rounded-xl p-3 text-center">
+                    <p className="text-2xl font-bold text-green-600">{formatCurrency(selectedItem.price)}</p>
+                    <p className="text-xs text-green-700 mt-1">Harga standar</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Catatan (opsional)
+                </label>
+                <textarea
+                  value={popupNotes}
+                  onChange={(e) => setPopupNotes(e.target.value)}
+                  placeholder="Contoh: Pedas, tanpa bawang, dll"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  rows={2}
+                />
+              </div>
+
+              {/* Total Preview */}
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-gray-600">Subtotal</p>
+                    <p className="text-xs text-gray-500">
+                      {popupQuantity} × {formatCurrency(useCustomPrice ? popupPrice : selectedItem.price)}
+                    </p>
+                  </div>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatCurrency((useCustomPrice ? popupPrice : selectedItem.price) * popupQuantity)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Add to Cart Button */}
+              <button
+                onClick={addToCartFromPopup}
+                className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-200 transform hover:-translate-y-0.5"
+              >
+                <ShoppingCart size={20} />
+                Tambah ke Keranjang
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Cart Drawer */}
       {showCartDrawer && (
         <>
@@ -468,37 +658,43 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
                   <p>Keranjang masih kosong</p>
                 </div>
               ) : (
-                cart.map(item => (
-                  <div key={item.menuItem.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
-                    <span className="text-2xl">{categoryEmojis[item.menuItem.category] || '🍽️'}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-800 text-sm truncate">{item.menuItem.name}</p>
-                      <p className="text-xs text-gray-500">{formatCurrency(item.menuItem.price)}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
+                cart.map((item, idx) => {
+                  const price = item.customPrice || item.menuItem.price;
+                  return (
+                    <div key={idx} className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                      <span className="text-2xl">{categoryEmojis[item.menuItem.category] || '🍽️'}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-800 text-sm truncate">{item.menuItem.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {formatCurrency(price)}
+                          {item.customPrice && <span className="text-orange-600 ml-1">(khusus)</span>}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => updateQuantity(idx, -1)}
+                          className="w-8 h-8 flex items-center justify-center bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition-colors"
+                        >
+                          <Minus size={12} className="text-gray-600" />
+                        </button>
+                        <span className="w-6 text-center font-bold text-sm text-gray-800">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(idx, 1)}
+                          className="w-8 h-8 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+                      <p className="font-semibold text-green-600 text-sm w-20 text-right">{formatCurrency(price * item.quantity)}</p>
                       <button
-                        onClick={() => updateQuantity(item.menuItem.id, -1)}
-                        className="w-8 h-8 flex items-center justify-center bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition-colors"
+                        onClick={() => removeFromCart(idx)}
+                        className="text-red-400 hover:text-red-600 p-1"
                       >
-                        <Minus size={12} className="text-gray-600" />
-                      </button>
-                      <span className="w-6 text-center font-bold text-sm text-gray-800">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.menuItem.id, 1)}
-                        className="w-8 h-8 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
-                      >
-                        <Plus size={12} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
-                    <p className="font-semibold text-green-600 text-sm w-20 text-right">{formatCurrency(item.subtotal)}</p>
-                    <button
-                      onClick={() => removeFromCart(item.menuItem.id)}
-                      className="text-red-400 hover:text-red-600 p-1"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 

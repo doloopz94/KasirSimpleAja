@@ -12,6 +12,7 @@ export interface TransactionItem {
   menuItem: MenuItem;
   quantity: number;
   subtotal: number;
+  customPrice?: number;
 }
 
 export interface Transaction {

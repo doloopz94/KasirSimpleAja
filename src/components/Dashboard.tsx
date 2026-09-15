@@ -30,7 +30,8 @@ const Dashboard: React.FC<Props> = ({ transactions, menuItems }) => {
         itemCounts[item.menuItem.id] = { name: item.menuItem.name, count: 0, revenue: 0 };
       }
       itemCounts[item.menuItem.id].count += item.quantity;
-      itemCounts[item.menuItem.id].revenue += item.subtotal;
+      const price = item.customPrice || item.menuItem.price;
+      itemCounts[item.menuItem.id].revenue += price * item.quantity;
     });
   });
   const topItems = Object.values(itemCounts)

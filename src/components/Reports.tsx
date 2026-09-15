@@ -58,7 +58,8 @@ const Reports: React.FC<Props> = ({ transactions }) => {
     filteredTransactions.forEach(t => {
       t.items.forEach(item => {
         const cat = item.menuItem.category;
-        map[cat] = (map[cat] || 0) + item.subtotal;
+        const price = item.customPrice || item.menuItem.price;
+        map[cat] = (map[cat] || 0) + (price * item.quantity);
       });
     });
     return Object.entries(map).map(([name, value]) => ({ name, value }));
@@ -316,7 +317,7 @@ const Reports: React.FC<Props> = ({ transactions }) => {
                           <td className="px-4 py-3 text-sm text-gray-600">{formatDate(t.date)}</td>
                           <td className="px-4 py-3 text-sm font-medium text-gray-800">{t.customerName}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">
-                            {t.items.map(i => `${i.menuItem.name} x${i.quantity}`).join(', ')}
+                            {t.items.map(i => `${i.menuItem.name} x${i.quantity}${i.customPrice ? ' (harga khusus)' : ''}`).join(', ')}
                           </td>
                           <td className="px-4 py-3 text-sm font-semibold text-right text-green-600">{formatCurrency(t.total)}</td>
                           <td className="px-4 py-3 text-center">
