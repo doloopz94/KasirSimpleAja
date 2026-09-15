@@ -3,14 +3,6 @@ import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
-// Firebase configuration
-// Ganti dengan konfigurasi project Firebase Anda
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -22,10 +14,6 @@ const firebaseConfig = {
   appId: "1:911368583365:web:d172bfca8d7c1990d618ac",
   measurementId: "G-FRTGQCLYVB"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 
 // Check if Firebase is configured
 export const isFirebaseConfigured = () => {
