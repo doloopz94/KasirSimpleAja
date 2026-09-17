@@ -41,6 +41,7 @@ Aplikasi web modern untuk mengelola penjualan makanan rumahan dengan fitur lengk
 
 ### 🖨️ Printer Thermal (Multi-Method)
 - **Bluetooth** - Koneksi langsung via Web Bluetooth API (Chrome/Edge)
+- **WiFi** - Koneksi via jaringan lokal untuk semua browser
 - **Cloud Print** - Cetak via internet untuk semua browser (fallback)
 - Support printer 58mm & 80mm
 - Auto-print struk setelah transaksi
@@ -250,9 +251,14 @@ npm run build
 
 ## 📝 Changelog
 
-### v1.2.0 (Current)
+### v1.3.0 (Current)
+- ✅ **WiFi Thermal Printer** - Koneksi via jaringan lokal (IP address + port)
+- ✅ **Multi-method printing** - Pilih Bluetooth, WiFi, atau Cloud Print
+- ✅ **WiFi configuration** - Input IP address dan port printer
+- ✅ **Auto-fallback** - Print dialog browser jika HTTP print gagal
+
+### v1.2.0
 - ✅ **Cloud Printing** - Alternatif cetak untuk semua browser (Safari, Firefox, iOS)
-- ✅ **Multi-method printing** - Pilih Bluetooth atau Cloud Print
 - ✅ **Auto-detect** - Otomatis sarankan Cloud Print jika Web Bluetooth tidak tersedia
 - ✅ **Fallback print** - Print dialog browser sebagai backup
 
@@ -289,6 +295,7 @@ MIT License - feel free to use for your business!
 Untuk pertanyaan atau bantuan:
 - Baca [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) untuk setup Firebase
 - Baca [THERMAL_PRINTER_GUIDE.md](./THERMAL_PRINTER_GUIDE.md) untuk setup printer thermal Bluetooth
+- Baca [WIFI_PRINTER_GUIDE.md](./WIFI_PRINTER_GUIDE.md) untuk setup printer thermal WiFi
 - Baca [CLOUD_PRINTING_GUIDE.md](./CLOUD_PRINTING_GUIDE.md) untuk cloud printing
 - Baca [NETLIFY_DEPLOY.md](./NETLIFY_DEPLOY.md) untuk deploy ke Netlify
 - Cek browser console untuk debug

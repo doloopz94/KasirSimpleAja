@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X, Wifi, WifiOff, Cloud } from 'lucide-react';
+import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X, Wifi, WifiOff, Cloud, Globe } from 'lucide-react';
 import { thermalPrinter } from '../services/ThermalPrinter';
 import { cloudPrinter } from '../services/CloudPrinter';
+import { wifiPrinter } from '../services/WiFiPrinter';
 
 interface SettingsData {
   storeName: string;
@@ -14,7 +15,9 @@ interface SettingsData {
   printerName: string;
   printerType: 'bluetooth' | 'usb' | 'wifi' | 'cloud';
   printerPaperSize: '58mm' | '80mm';
-  printerConnectionMethod: 'bluetooth' | 'cloud';
+  printerConnectionMethod: 'bluetooth' | 'cloud' | 'wifi';
+  wifiPrinterIP: string;
+  wifiPrinterPort: number;
   receiptShowLogo: boolean;
   receiptShowStoreName: boolean;
   receiptShowAddress: boolean;
@@ -37,6 +40,8 @@ const defaultSettings: SettingsData = {
   printerType: 'bluetooth',
   printerPaperSize: '80mm',
   printerConnectionMethod: 'bluetooth',
+  wifiPrinterIP: '',
+  wifiPrinterPort: 9100,
   receiptShowLogo: true,
   receiptShowStoreName: true,
   receiptShowAddress: true,
@@ -88,8 +93,10 @@ const SettingsPage: React.FC = () => {
       // Disconnect
       if (settings.printerConnectionMethod === 'bluetooth') {
         thermalPrinter.disconnect();
-      } else {
+      } else if (settings.printerConnectionMethod === 'cloud') {
         cloudPrinter.disconnect();
+      } else if (settings.printerConnectionMethod === 'wifi') {
+        wifiPrinter.disconnect();
       }
       setPrinterConnected(false);
       setPrinterName(null);
@@ -115,11 +122,31 @@ const SettingsPage: React.FC = () => {
         setPrinterName(state.deviceName);
         
         alert(`Printer berhasil terhubung: ${state.deviceName}`);
-      } else {
+      } else if (settings.printerConnectionMethod === 'cloud') {
         // Cloud printing connection
         const printers = await cloudPrinter.getPrinters();
         setAvailableCloudPrinters(printers);
         setShowCloudPrinters(true);
+      } else if (settings.printerConnectionMethod === 'wifi') {
+        // WiFi printer connection
+        if (!settings.wifiPrinterIP) {
+          throw new Error('IP Address printer WiFi belum diisi. Silakan isi di pengaturan di atas.');
+        }
+        
+        const success = await wifiPrinter.connect({
+          ipAddress: settings.wifiPrinterIP,
+          port: settings.wifiPrinterPort,
+          printerModel: settings.printerName
+        });
+        
+        if (success) {
+          const state = wifiPrinter.getState();
+          setPrinterConnected(state.connected);
+          setPrinterName(state.printerName);
+          alert(`Printer WiFi berhasil terhubung: ${state.printerName}`);
+        } else {
+          throw new Error('Gagal terhubung ke printer WiFi. Periksa IP address dan port.');
+        }
       }
     } catch (error) {
       console.error('Connection failed:', error);
@@ -190,8 +217,15 @@ const SettingsPage: React.FC = () => {
           settings.storePhone,
           testTransaction
         );
-      } else {
+      } else if (settings.printerConnectionMethod === 'cloud') {
         await cloudPrinter.printReceipt(
+          settings.storeName,
+          settings.storeAddress,
+          settings.storePhone,
+          testTransaction
+        );
+      } else if (settings.printerConnectionMethod === 'wifi') {
+        await wifiPrinter.printReceipt(
           settings.storeName,
           settings.storeAddress,
           settings.storePhone,
@@ -479,7 +513,7 @@ const SettingsPage: React.FC = () => {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Metode Koneksi
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setSettings({ ...settings, printerConnectionMethod: 'bluetooth' })}
                   disabled={!webBluetoothAvailable}
@@ -493,6 +527,17 @@ const SettingsPage: React.FC = () => {
                   Bluetooth
                 </button>
                 <button
+                  onClick={() => setSettings({ ...settings, printerConnectionMethod: 'wifi' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    settings.printerConnectionMethod === 'wifi'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
+                  <Globe size={16} />
+                  WiFi
+                </button>
+                <button
                   onClick={() => setSettings({ ...settings, printerConnectionMethod: 'cloud' })}
                   className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all flex items-center justify-center gap-2 ${
                     settings.printerConnectionMethod === 'cloud'
@@ -504,13 +549,62 @@ const SettingsPage: React.FC = () => {
                   Cloud Print
                 </button>
               </div>
-              {!webBluetoothAvailable && (
+              {!webBluetoothAvailable && settings.printerConnectionMethod === 'bluetooth' && (
                 <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
                   <WifiOff size={12} />
-                  Web Bluetooth tidak tersedia. Gunakan Cloud Print sebagai alternatif.
+                  Web Bluetooth tidak tersedia. Gunakan WiFi atau Cloud Print sebagai alternatif.
                 </p>
               )}
             </div>
+
+            {/* WiFi Printer Configuration */}
+            {settings.printerConnectionMethod === 'wifi' && (
+              <div className="space-y-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="flex items-center gap-2 text-blue-700 font-semibold text-sm">
+                  <Globe size={18} />
+                  Konfigurasi WiFi Printer
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    IP Address Printer
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.wifiPrinterIP}
+                    onChange={(e) => setSettings({ ...settings, wifiPrinterIP: e.target.value })}
+                    placeholder="192.168.1.100"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Contoh: 192.168.1.100 (cek di pengaturan printer)
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Port
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.wifiPrinterPort}
+                    onChange={(e) => setSettings({ ...settings, wifiPrinterPort: parseInt(e.target.value) || 9100 })}
+                    placeholder="9100"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Default: 9100 (port standar thermal printer)
+                  </p>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-xs text-yellow-800">
+                    <strong>💡 Tips:</strong> Pastikan printer WiFi dan device berada di jaringan yang sama. 
+                    Cek IP address printer di menu pengaturan printer atau cetak test page dari printer.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -603,6 +697,11 @@ const SettingsPage: React.FC = () => {
                     <Wifi size={18} />
                     Scan & Hubungkan Printer
                   </>
+                ) : settings.printerConnectionMethod === 'wifi' ? (
+                  <>
+                    <Globe size={18} />
+                    Hubungkan WiFi Printer
+                  </>
                 ) : (
                   <>
                     <Cloud size={18} />
@@ -673,6 +772,7 @@ const SettingsPage: React.FC = () => {
 
               <p className="text-xs text-gray-500 text-center">
                 {!printerConnected && settings.printerConnectionMethod === 'bluetooth' && 'Pastikan printer dalam jangkauan dan mode pairing aktif'}
+                {!printerConnected && settings.printerConnectionMethod === 'wifi' && 'Pastikan IP address dan port sudah benar'}
                 {!printerConnected && settings.printerConnectionMethod === 'cloud' && 'Pilih cloud printer dari daftar yang tersedia'}
                 {printerConnected && 'Printer siap digunakan untuk mencetak struk'}
               </p>
