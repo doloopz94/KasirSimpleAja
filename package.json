@@ -2,6 +2,9 @@
   "name": "sandbox-workspace",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -25,6 +28,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.7",
+    "@tailwindcss/oxide-linux-x64-gnu": "4.3.3",
     "@types/canvas-confetti": "^1.6.4",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
