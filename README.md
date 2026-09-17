@@ -39,12 +39,14 @@ Aplikasi web modern untuk mengelola penjualan makanan rumahan dengan fitur lengk
 - **Cetak ulang struk** - Print struk transaksi lama
 - **Hapus transaksi** - Hapus transaksi yang salah
 
-### 🖨️ Printer Thermal Bluetooth
-- Koneksi langsung via Web Bluetooth API
+### 🖨️ Printer Thermal (Multi-Method)
+- **Bluetooth** - Koneksi langsung via Web Bluetooth API (Chrome/Edge)
+- **Cloud Print** - Cetak via internet untuk semua browser (fallback)
 - Support printer 58mm & 80mm
 - Auto-print struk setelah transaksi
 - Cetak ulang struk dari riwayat
 - ESC/POS protocol compatible
+- Fallback ke print dialog browser
 
 ### ⚙️ Pengaturan
 - Info toko (nama, alamat, telepon)
@@ -248,7 +250,13 @@ npm run build
 
 ## 📝 Changelog
 
-### v1.1.0 (Current)
+### v1.2.0 (Current)
+- ✅ **Cloud Printing** - Alternatif cetak untuk semua browser (Safari, Firefox, iOS)
+- ✅ **Multi-method printing** - Pilih Bluetooth atau Cloud Print
+- ✅ **Auto-detect** - Otomatis sarankan Cloud Print jika Web Bluetooth tidak tersedia
+- ✅ **Fallback print** - Print dialog browser sebagai backup
+
+### v1.1.0
 - ✅ **Printer thermal Bluetooth** - Koneksi langsung via Web Bluetooth
 - ✅ **Edit transaksi** - Ubah data pelanggan & catatan
 - ✅ **Cetak ulang struk** - Print struk dari riwayat transaksi
@@ -280,7 +288,8 @@ MIT License - feel free to use for your business!
 
 Untuk pertanyaan atau bantuan:
 - Baca [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) untuk setup Firebase
-- Baca [THERMAL_PRINTER_GUIDE.md](./THERMAL_PRINTER_GUIDE.md) untuk setup printer thermal
+- Baca [THERMAL_PRINTER_GUIDE.md](./THERMAL_PRINTER_GUIDE.md) untuk setup printer thermal Bluetooth
+- Baca [CLOUD_PRINTING_GUIDE.md](./CLOUD_PRINTING_GUIDE.md) untuk cloud printing
 - Baca [NETLIFY_DEPLOY.md](./NETLIFY_DEPLOY.md) untuk deploy ke Netlify
 - Cek browser console untuk debug
 - Review dokumentasi Firebase: https://firebase.google.com/docs

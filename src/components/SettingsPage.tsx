@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X, Wifi, WifiOff, Cloud } from 'lucide-react';
 import { thermalPrinter } from '../services/ThermalPrinter';
+import { cloudPrinter } from '../services/CloudPrinter';
 
 interface SettingsData {
   storeName: string;
@@ -11,8 +12,9 @@ interface SettingsData {
   qrisMerchantId: string;
   qrisAmount: string;
   printerName: string;
-  printerType: 'bluetooth' | 'usb' | 'wifi';
+  printerType: 'bluetooth' | 'usb' | 'wifi' | 'cloud';
   printerPaperSize: '58mm' | '80mm';
+  printerConnectionMethod: 'bluetooth' | 'cloud';
   receiptShowLogo: boolean;
   receiptShowStoreName: boolean;
   receiptShowAddress: boolean;
@@ -34,6 +36,7 @@ const defaultSettings: SettingsData = {
   printerName: 'Thermal Printer',
   printerType: 'bluetooth',
   printerPaperSize: '80mm',
+  printerConnectionMethod: 'bluetooth',
   receiptShowLogo: true,
   receiptShowStoreName: true,
   receiptShowAddress: true,
@@ -59,6 +62,20 @@ const SettingsPage: React.FC = () => {
   const [printerName, setPrinterName] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [webBluetoothAvailable, setWebBluetoothAvailable] = useState(false);
+  const [showCloudPrinters, setShowCloudPrinters] = useState(false);
+  const [availableCloudPrinters, setAvailableCloudPrinters] = useState<Array<{id: string, name: string}>>([]);
+
+  // Detect Web Bluetooth availability
+  useEffect(() => {
+    const isAvailable = 'bluetooth' in navigator;
+    setWebBluetoothAvailable(isAvailable);
+    
+    // If Web Bluetooth not available, default to cloud printing
+    if (!isAvailable && settings.printerConnectionMethod === 'bluetooth') {
+      setSettings(prev => ({ ...prev, printerConnectionMethod: 'cloud' }));
+    }
+  }, []);
 
   const handleSave = () => {
     localStorage.setItem('dapurku_settings', JSON.stringify(settings));
@@ -69,7 +86,11 @@ const SettingsPage: React.FC = () => {
   const handleConnectPrinter = async () => {
     if (printerConnected) {
       // Disconnect
-      thermalPrinter.disconnect();
+      if (settings.printerConnectionMethod === 'bluetooth') {
+        thermalPrinter.disconnect();
+      } else {
+        cloudPrinter.disconnect();
+      }
       setPrinterConnected(false);
       setPrinterName(null);
       return;
@@ -77,22 +98,54 @@ const SettingsPage: React.FC = () => {
 
     setIsConnecting(true);
     try {
-      // Set paper size
-      thermalPrinter.setPaperSize(settings.printerPaperSize);
-      
-      // Connect to printer
-      await thermalPrinter.connect();
-      
-      const state = thermalPrinter.getState();
-      setPrinterConnected(state.connected);
-      setPrinterName(state.deviceName);
-      
-      alert(`Printer berhasil terhubung: ${state.deviceName}`);
+      if (settings.printerConnectionMethod === 'bluetooth') {
+        // Web Bluetooth connection
+        if (!webBluetoothAvailable) {
+          throw new Error('Web Bluetooth tidak tersedia di browser ini. Gunakan Chrome/Edge atau aktifkan Cloud Printing.');
+        }
+        
+        // Set paper size
+        thermalPrinter.setPaperSize(settings.printerPaperSize);
+        
+        // Connect to printer
+        await thermalPrinter.connect();
+        
+        const state = thermalPrinter.getState();
+        setPrinterConnected(state.connected);
+        setPrinterName(state.deviceName);
+        
+        alert(`Printer berhasil terhubung: ${state.deviceName}`);
+      } else {
+        // Cloud printing connection
+        const printers = await cloudPrinter.getPrinters();
+        setAvailableCloudPrinters(printers);
+        setShowCloudPrinters(true);
+      }
     } catch (error) {
       console.error('Connection failed:', error);
       alert(`Gagal terhubung ke printer: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setPrinterConnected(false);
       setPrinterName(null);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleSelectCloudPrinter = async (printerId: string, printerName: string) => {
+    setIsConnecting(true);
+    try {
+      const success = await cloudPrinter.connect(printerId, printerName);
+      if (success) {
+        setPrinterConnected(true);
+        setPrinterName(printerName);
+        setShowCloudPrinters(false);
+        alert(`Cloud printer berhasil terhubung: ${printerName}`);
+      } else {
+        throw new Error('Gagal menghubungkan ke cloud printer');
+      }
+    } catch (error) {
+      console.error('Cloud printer connection failed:', error);
+      alert(`Gagal terhubung ke cloud printer: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsConnecting(false);
     }
@@ -130,12 +183,21 @@ const SettingsPage: React.FC = () => {
         status: 'paid' as const
       };
 
-      await thermalPrinter.printReceipt(
-        settings.storeName,
-        settings.storeAddress,
-        settings.storePhone,
-        testTransaction
-      );
+      if (settings.printerConnectionMethod === 'bluetooth') {
+        await thermalPrinter.printReceipt(
+          settings.storeName,
+          settings.storeAddress,
+          settings.storePhone,
+          testTransaction
+        );
+      } else {
+        await cloudPrinter.printReceipt(
+          settings.storeName,
+          settings.storeAddress,
+          settings.storePhone,
+          testTransaction
+        );
+      }
 
       alert('Test cetak berhasil!');
     } catch (error) {
@@ -408,8 +470,46 @@ const SettingsPage: React.FC = () => {
               <PrinterIcon size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm">
                 <p className="font-semibold text-blue-900 mb-1">Pengaturan Printer Thermal</p>
-                <p className="text-blue-700 text-xs">Konfigurasi printer thermal Bluetooth/USB/WiFi untuk cetak struk</p>
+                <p className="text-blue-700 text-xs">Konfigurasi printer thermal untuk cetak struk</p>
               </div>
+            </div>
+
+            {/* Connection Method Selection */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Metode Koneksi
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setSettings({ ...settings, printerConnectionMethod: 'bluetooth' })}
+                  disabled={!webBluetoothAvailable}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    settings.printerConnectionMethod === 'bluetooth'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  } ${!webBluetoothAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {webBluetoothAvailable ? <Wifi size={16} /> : <WifiOff size={16} />}
+                  Bluetooth
+                </button>
+                <button
+                  onClick={() => setSettings({ ...settings, printerConnectionMethod: 'cloud' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    settings.printerConnectionMethod === 'cloud'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
+                  <Cloud size={16} />
+                  Cloud Print
+                </button>
+              </div>
+              {!webBluetoothAvailable && (
+                <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
+                  <WifiOff size={12} />
+                  Web Bluetooth tidak tersedia. Gunakan Cloud Print sebagai alternatif.
+                </p>
+              )}
             </div>
 
             <div>
@@ -498,13 +598,57 @@ const SettingsPage: React.FC = () => {
                     <X size={18} />
                     Putuskan Koneksi
                   </>
+                ) : settings.printerConnectionMethod === 'bluetooth' ? (
+                  <>
+                    <Wifi size={18} />
+                    Scan & Hubungkan Printer
+                  </>
                 ) : (
                   <>
-                    <PrinterIcon size={18} />
-                    Scan & Hubungkan Printer
+                    <Cloud size={18} />
+                    Hubungkan Cloud Printer
                   </>
                 )}
               </button>
+
+              {/* Cloud Printer Selection Modal */}
+              {showCloudPrinters && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-gray-800">Pilih Cloud Printer</h3>
+                      <button
+                        onClick={() => setShowCloudPrinters(false)}
+                        className="p-1 hover:bg-gray-100 rounded-lg"
+                      >
+                        <X size={20} className="text-gray-500" />
+                      </button>
+                    </div>
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {availableCloudPrinters.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <Cloud size={48} className="mx-auto mb-2 opacity-50" />
+                          <p>Tidak ada printer tersedia</p>
+                        </div>
+                      ) : (
+                        availableCloudPrinters.map((printer) => (
+                          <button
+                            key={printer.id}
+                            onClick={() => handleSelectCloudPrinter(printer.id, printer.name)}
+                            className="w-full p-4 border-2 border-gray-200 hover:border-blue-500 rounded-xl text-left transition-all flex items-center gap-3"
+                          >
+                            <Cloud size={24} className="text-blue-500" />
+                            <div>
+                              <p className="font-medium text-gray-800">{printer.name}</p>
+                              <p className="text-xs text-gray-500">ID: {printer.id}</p>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Test Print Button */}
               {printerConnected && (
@@ -528,7 +672,8 @@ const SettingsPage: React.FC = () => {
               )}
 
               <p className="text-xs text-gray-500 text-center">
-                {!printerConnected && 'Pastikan printer dalam jangkauan dan mode pairing aktif'}
+                {!printerConnected && settings.printerConnectionMethod === 'bluetooth' && 'Pastikan printer dalam jangkauan dan mode pairing aktif'}
+                {!printerConnected && settings.printerConnectionMethod === 'cloud' && 'Pilih cloud printer dari daftar yang tersedia'}
                 {printerConnected && 'Printer siap digunakan untuk mencetak struk'}
               </p>
             </div>
