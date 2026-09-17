@@ -1,7 +1,7 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
+import { initializeApp, FirebaseApp } from 'firebase/app';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getAuth, Auth } from 'firebase/auth';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 // Firebase configuration
 // Gunakan environment variables untuk production
@@ -15,22 +15,25 @@ const firebaseConfig = {
 };
 
 // Check if Firebase is configured
-export const isFirebaseConfigured = () => {
+export const isFirebaseConfigured = (): boolean => {
   return firebaseConfig.apiKey !== "YOUR_API_KEY" && 
          firebaseConfig.projectId !== "YOUR_PROJECT_ID";
 };
 
-// Initialize Firebase only if configured
-let app: any = null;
-let db: any = null;
-let auth: any = null;
-let storage: any = null;
+// Initialize Firebase instances
+let firebaseApp: FirebaseApp | null = null;
+let firestoreDb: Firestore | null = null;
+let firebaseAuth: Auth | null = null;
+let firebaseStorage: FirebaseStorage | null = null;
 
 if (isFirebaseConfigured()) {
-  app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  auth = getAuth(app);
-  storage = getStorage(app);
+  firebaseApp = initializeApp(firebaseConfig);
+  firestoreDb = getFirestore(firebaseApp);
+  firebaseAuth = getAuth(firebaseApp);
+  firebaseStorage = getStorage(firebaseApp);
 }
 
-export { db, auth, storage };
+// Export instances
+export const db = firestoreDb;
+export const auth = firebaseAuth;
+export const storage = firebaseStorage;

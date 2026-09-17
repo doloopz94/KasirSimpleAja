@@ -8,7 +8,8 @@ import {
   query, 
   orderBy,
   onSnapshot,
-  setDoc
+  setDoc,
+  getDoc
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, isFirebaseConfigured } from './config';
@@ -18,7 +19,7 @@ import { MenuItem, Transaction } from '../types';
 export const menuService = {
   // Get all menu items
   getAll: async (): Promise<MenuItem[]> => {
-    if (!isFirebaseConfigured()) return [];
+    if (!isFirebaseConfigured() || !db) return [];
     
     try {
       const menuCollection = collection(db, 'menu');
@@ -35,7 +36,7 @@ export const menuService = {
 
   // Listen to menu changes (real-time)
   subscribe: (callback: (items: MenuItem[]) => void) => {
-    if (!isFirebaseConfigured()) return () => {};
+    if (!isFirebaseConfigured() || !db) return () => {};
     
     const menuCollection = collection(db, 'menu');
     return onSnapshot(menuCollection, (snapshot) => {
@@ -49,7 +50,7 @@ export const menuService = {
 
   // Add new menu item
   add: async (item: Omit<MenuItem, 'id'>): Promise<string | null> => {
-    if (!isFirebaseConfigured()) return null;
+    if (!isFirebaseConfigured() || !db) return null;
     
     try {
       const menuCollection = collection(db, 'menu');
@@ -63,7 +64,7 @@ export const menuService = {
 
   // Update menu item
   update: async (id: string, item: Partial<MenuItem>): Promise<boolean> => {
-    if (!isFirebaseConfigured()) return false;
+    if (!isFirebaseConfigured() || !db) return false;
     
     try {
       const itemDoc = doc(db, 'menu', id);
@@ -77,7 +78,7 @@ export const menuService = {
 
   // Delete menu item
   delete: async (id: string): Promise<boolean> => {
-    if (!isFirebaseConfigured()) return false;
+    if (!isFirebaseConfigured() || !db) return false;
     
     try {
       const itemDoc = doc(db, 'menu', id);
@@ -91,7 +92,7 @@ export const menuService = {
 
   // Save all menu items (replace all)
   saveAll: async (items: MenuItem[]): Promise<boolean> => {
-    if (!isFirebaseConfigured()) return false;
+    if (!isFirebaseConfigured() || !db) return false;
     
     try {
       // Delete all existing items
@@ -122,7 +123,7 @@ export const menuService = {
 export const transactionService = {
   // Get all transactions
   getAll: async (): Promise<Transaction[]> => {
-    if (!isFirebaseConfigured()) return [];
+    if (!isFirebaseConfigured() || !db) return [];
     
     try {
       const transactionCollection = collection(db, 'transactions');
@@ -140,7 +141,7 @@ export const transactionService = {
 
   // Listen to transaction changes (real-time)
   subscribe: (callback: (transactions: Transaction[]) => void) => {
-    if (!isFirebaseConfigured()) return () => {};
+    if (!isFirebaseConfigured() || !db) return () => {};
     
     const transactionCollection = collection(db, 'transactions');
     const q = query(transactionCollection, orderBy('date', 'desc'));
@@ -156,7 +157,7 @@ export const transactionService = {
 
   // Add new transaction
   add: async (transaction: Omit<Transaction, 'id'>): Promise<string | null> => {
-    if (!isFirebaseConfigured()) return null;
+    if (!isFirebaseConfigured() || !db) return null;
     
     try {
       const transactionCollection = collection(db, 'transactions');
@@ -170,7 +171,7 @@ export const transactionService = {
 
   // Update transaction
   update: async (id: string, transaction: Partial<Transaction>): Promise<boolean> => {
-    if (!isFirebaseConfigured()) return false;
+    if (!isFirebaseConfigured() || !db) return false;
     
     try {
       const transactionDoc = doc(db, 'transactions', id);
@@ -187,11 +188,10 @@ export const transactionService = {
 export const settingsService = {
   // Get settings
   get: async (): Promise<any> => {
-    if (!isFirebaseConfigured()) return null;
+    if (!isFirebaseConfigured() || !db) return null;
     
     try {
       const settingsDoc = doc(db, 'settings', 'app');
-      const { getDoc } = await import('firebase/firestore');
       const docSnap = await getDoc(settingsDoc);
       
       if (docSnap.exists()) {
@@ -206,7 +206,7 @@ export const settingsService = {
 
   // Save settings
   save: async (settings: any): Promise<boolean> => {
-    if (!isFirebaseConfigured()) return false;
+    if (!isFirebaseConfigured() || !db) return false;
     
     try {
       const settingsDoc = doc(db, 'settings', 'app');
@@ -223,7 +223,7 @@ export const settingsService = {
 export const logoService = {
   // Upload logo
   upload: async (file: File): Promise<string | null> => {
-    if (!isFirebaseConfigured()) return null;
+    if (!isFirebaseConfigured() || !storage) return null;
     
     try {
       const storageRef = ref(storage, `logos/${Date.now()}_${file.name}`);
