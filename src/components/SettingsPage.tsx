@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield } from 'lucide-react';
+import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X } from 'lucide-react';
+import { thermalPrinter } from '../services/ThermalPrinter';
 
 interface SettingsData {
   storeName: string;
@@ -52,11 +53,97 @@ const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'account' | 'qris' | 'printer' | 'receipt'>('account');
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  
+  // Printer state
+  const [printerConnected, setPrinterConnected] = useState(false);
+  const [printerName, setPrinterName] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const handleSave = () => {
     localStorage.setItem('dapurku_settings', JSON.stringify(settings));
     setShowSaveSuccess(true);
     setTimeout(() => setShowSaveSuccess(false), 2000);
+  };
+
+  const handleConnectPrinter = async () => {
+    if (printerConnected) {
+      // Disconnect
+      thermalPrinter.disconnect();
+      setPrinterConnected(false);
+      setPrinterName(null);
+      return;
+    }
+
+    setIsConnecting(true);
+    try {
+      // Set paper size
+      thermalPrinter.setPaperSize(settings.printerPaperSize);
+      
+      // Connect to printer
+      await thermalPrinter.connect();
+      
+      const state = thermalPrinter.getState();
+      setPrinterConnected(state.connected);
+      setPrinterName(state.deviceName);
+      
+      alert(`Printer berhasil terhubung: ${state.deviceName}`);
+    } catch (error) {
+      console.error('Connection failed:', error);
+      alert(`Gagal terhubung ke printer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setPrinterConnected(false);
+      setPrinterName(null);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleTestPrint = async () => {
+    if (!printerConnected) {
+      alert('Printer tidak terhubung');
+      return;
+    }
+
+    setIsPrinting(true);
+    try {
+      // Create test transaction
+      const testTransaction = {
+        id: 'test123',
+        date: new Date().toISOString(),
+        customerName: 'Test Customer',
+        customerPhone: '081234567890',
+        items: [
+          {
+            menuItem: { id: '1', name: 'Nasi Goreng', price: 20000, category: 'Makanan', description: '', available: true },
+            quantity: 2,
+            subtotal: 40000
+          },
+          {
+            menuItem: { id: '2', name: 'Es Teh', price: 5000, category: 'Minuman', description: '', available: true },
+            quantity: 1,
+            subtotal: 5000
+          }
+        ],
+        total: 45000,
+        deliveryFee: 0,
+        paymentMethod: 'cash' as const,
+        status: 'paid' as const
+      };
+
+      await thermalPrinter.printReceipt(
+        settings.storeName,
+        settings.storeAddress,
+        settings.storePhone,
+        testTransaction
+      );
+
+      alert('Test cetak berhasil!');
+    } catch (error) {
+      console.error('Print failed:', error);
+      alert(`Gagal mencetak: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -380,15 +467,70 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-gray-100">
+            <div className="pt-4 border-t border-gray-100 space-y-3">
+              {/* Connection Status */}
+              {printerConnected && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm text-green-700 font-medium">
+                    Terhubung: {printerName}
+                  </span>
+                </div>
+              )}
+
+              {/* Connect Button */}
               <button
-                onClick={() => alert('Fitur scan printer akan segera tersedia')}
-                className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors"
+                onClick={handleConnectPrinter}
+                disabled={isConnecting}
+                className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors ${
+                  printerConnected
+                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                <PrinterIcon size={18} />
-                Scan & Hubungkan Printer
+                {isConnecting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Menghubungkan...
+                  </>
+                ) : printerConnected ? (
+                  <>
+                    <X size={18} />
+                    Putuskan Koneksi
+                  </>
+                ) : (
+                  <>
+                    <PrinterIcon size={18} />
+                    Scan & Hubungkan Printer
+                  </>
+                )}
               </button>
-              <p className="text-xs text-gray-500 text-center mt-2">Pastikan printer dalam jangkauan dan mode pairing aktif</p>
+
+              {/* Test Print Button */}
+              {printerConnected && (
+                <button
+                  onClick={handleTestPrint}
+                  disabled={isPrinting}
+                  className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isPrinting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Mencetak...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={18} />
+                      Test Cetak
+                    </>
+                  )}
+                </button>
+              )}
+
+              <p className="text-xs text-gray-500 text-center">
+                {!printerConnected && 'Pastikan printer dalam jangkauan dan mode pairing aktif'}
+                {printerConnected && 'Printer siap digunakan untuk mencetak struk'}
+              </p>
             </div>
           </div>
         )}

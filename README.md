@@ -35,12 +35,23 @@ Aplikasi web modern untuk mengelola penjualan makanan rumahan dengan fitur lengk
 - Grafik pendapatan
 - Analisis kategori
 - Export CSV
+- **Edit transaksi** - Ubah data pelanggan & catatan
+- **Cetak ulang struk** - Print struk transaksi lama
+- **Hapus transaksi** - Hapus transaksi yang salah
+
+### 🖨️ Printer Thermal Bluetooth
+- Koneksi langsung via Web Bluetooth API
+- Support printer 58mm & 80mm
+- Auto-print struk setelah transaksi
+- Cetak ulang struk dari riwayat
+- ESC/POS protocol compatible
 
 ### ⚙️ Pengaturan
 - Info toko (nama, alamat, telepon)
 - Upload logo toko
 - Konfigurasi QRIS
-- Setting printer thermal
+- **Koneksi printer thermal Bluetooth** - Scan & connect langsung
+- **Test cetak** - Verify printer bekerja
 - Kustomisasi tampilan struk
 
 ### 🔐 Sistem Login
@@ -91,6 +102,7 @@ Buka http://localhost:5173
 - **Charts:** Recharts
 - **Database:** Firebase Firestore (with localStorage fallback)
 - **Build Tool:** Vite
+- **Hardware:** Web Bluetooth API (Thermal Printer)
 
 ## 🗄️ Database
 
@@ -236,7 +248,11 @@ npm run build
 
 ## 📝 Changelog
 
-### v1.0.0 (Current)
+### v1.1.0 (Current)
+- ✅ **Printer thermal Bluetooth** - Koneksi langsung via Web Bluetooth
+- ✅ **Edit transaksi** - Ubah data pelanggan & catatan
+- ✅ **Cetak ulang struk** - Print struk dari riwayat transaksi
+- ✅ **Hapus transaksi** - Hapus transaksi yang salah
 - ✅ Dashboard & statistik
 - ✅ Kelola menu
 - ✅ Transaksi dengan QRIS
@@ -248,6 +264,9 @@ npm run build
 - ✅ Login system
 - ✅ Firebase integration
 - ✅ Responsive design
+
+### v1.0.0
+- Initial release
 
 ## 🤝 Contributing
 
@@ -261,6 +280,8 @@ MIT License - feel free to use for your business!
 
 Untuk pertanyaan atau bantuan:
 - Baca [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) untuk setup Firebase
+- Baca [THERMAL_PRINTER_GUIDE.md](./THERMAL_PRINTER_GUIDE.md) untuk setup printer thermal
+- Baca [NETLIFY_DEPLOY.md](./NETLIFY_DEPLOY.md) untuk deploy ke Netlify
 - Cek browser console untuk debug
 - Review dokumentasi Firebase: https://firebase.google.com/docs
 
