@@ -15,6 +15,10 @@ const firebaseConfig = {
   measurementId: "G-FRTGQCLYVB"
 };
 
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
 // Check if Firebase is configured
 export const isFirebaseConfigured = (): boolean => {
   return firebaseConfig.apiKey !== "YOUR_API_KEY" && 
