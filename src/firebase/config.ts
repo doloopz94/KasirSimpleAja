@@ -1,8 +1,7 @@
-import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getAuth, Auth } from 'firebase/auth';
-import { getStorage, FirebaseStorage } from 'firebase/storage';
-import { getAnalytics, Analytics } from 'firebase/analytics';
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -16,8 +15,12 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+const firebaseApp = initializeApp(firebaseConfig);
+
+// Initialize Firebase services
+const firestoreDb = getFirestore(firebaseApp);
+const firebaseAuth = getAuth(firebaseApp);
+const firebaseStorage = getStorage(firebaseApp);
 
 // Check if Firebase is configured
 export const isFirebaseConfigured = (): boolean => {
@@ -25,22 +28,7 @@ export const isFirebaseConfigured = (): boolean => {
          firebaseConfig.projectId !== "YOUR_PROJECT_ID";
 };
 
-// Initialize Firebase
-const firebaseApp: FirebaseApp = initializeApp(firebaseConfig);
-
-// Initialize Firebase services
-const firestoreDb: Firestore = getFirestore(firebaseApp);
-const firebaseAuth: Auth = getAuth(firebaseApp);
-const firebaseStorage: FirebaseStorage = getStorage(firebaseApp);
-
-// Initialize Analytics only in browser environment
-let firebaseAnalytics: Analytics | null = null;
-if (typeof window !== 'undefined') {
-  firebaseAnalytics = getAnalytics(firebaseApp);
-}
-
 // Export instances
 export const db = firestoreDb;
 export const auth = firebaseAuth;
 export const storage = firebaseStorage;
-export const analytics = firebaseAnalytics;
