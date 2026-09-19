@@ -71,7 +71,7 @@ ${menuList}
 - Format dalam bahasa Indonesia
 - Jangan gunakan markdown, gunakan plain text dengan emoji`;
 
-    // Call OpenRouter API
+    // Call OpenRouter API with Qwen model
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -81,7 +81,7 @@ ${menuList}
         'X-Title': 'DapurKu - Promotion Generator'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: 'qwen/qwen3.8-27b:free',
         messages: [
           {
             role: 'system',
@@ -93,7 +93,10 @@ ${menuList}
           }
         ],
         temperature: 0.8,
-        max_tokens: 1000
+        max_tokens: 1000,
+        provider: {
+          allow_fallbacks: true
+        }
       })
     });
 

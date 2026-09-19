@@ -116,7 +116,7 @@ Hasil AI:
 
 ### API yang Digunakan
 - **Provider**: OpenRouter AI
-- **Model**: Google Gemini 2.0 Flash
+- **Model**: Qwen 3.8 27B (Free)
 - **Endpoint**: `https://openrouter.ai/api/v1/chat/completions`
 
 ### Rate Limit

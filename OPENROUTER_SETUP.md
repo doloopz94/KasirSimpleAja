@@ -222,7 +222,7 @@ fetch('/.netlify/functions/generate-promotion', {
        ▼
 ┌─────────────────────┐
 │  OpenRouter API     │
-│  (Google Gemini)    │
+│  (Qwen 3.8 27B)     │
 │                     │
 │  - Generate text    │
 │  - Return response  │
