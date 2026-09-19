@@ -29,3 +29,16 @@ export interface Transaction {
 }
 
 export type Page = 'dashboard' | 'menu' | 'transaction' | 'reports' | 'promotion' | 'settings';
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  pin: string;
+  role: 'admin' | 'kasir' | 'owner';
+  fullName: string;
+  email?: string;
+  phone?: string;
+  isActive: boolean;
+  createdAt: string;
+  lastLogin?: string;
+}

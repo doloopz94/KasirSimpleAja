@@ -12,6 +12,7 @@ import { LayoutDashboard, UtensilsCrossed, ShoppingCart, BarChart3, ChefHat, Set
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ username: string; role: string } | null>(null);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -40,12 +41,21 @@ const App: React.FC = () => {
   useEffect(() => {
     const auth = localStorage.getItem('dapurku_auth');
     if (auth) {
+      const userData = JSON.parse(auth);
       setIsLoggedIn(true);
+      setCurrentUser(userData);
     }
     
-    // Load initial data from localStorage
-    setMenuItems(getMenuItems());
-    setTransactions(getTransactions());
+    // Load initial data - async load from Firebase/localStorage
+    const loadData = async () => {
+      const menu = await getMenuItems();
+      setMenuItems(menu);
+      
+      const trans = await getTransactions();
+      setTransactions(trans);
+    };
+    
+    loadData();
     
     // Check Firebase status
     const status = getFirebaseStatus();
@@ -85,27 +95,27 @@ const App: React.FC = () => {
     }
   }, [storeName, storeLogo]);
 
-  const handleLogin = (username: string) => {
+  const handleLogin = (username: string, role: string) => {
     setIsLoggedIn(true);
+    setCurrentUser({ username, role });
   };
 
-  const handleSaveMenu = (items: MenuItem[]) => {
+  const handleSaveMenu = async (items: MenuItem[]) => {
+    // Update UI immediately
     setMenuItems(items);
-    saveMenuItems(items);
+    // Save to Firebase
+    await saveMenuItems(items);
   };
 
   const handleSaveTransaction = async (transaction: Transaction) => {
-    // Add to localStorage immediately for UI update
-    const updated = [...transactions, transaction];
-    setTransactions(updated);
-    
-    // Save to Firebase if configured
+    // Save to Firebase (real-time subscription akan update UI otomatis)
     await addTransaction(transaction);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('dapurku_auth');
     setIsLoggedIn(false);
+    setCurrentUser(null);
   };
 
   // Show login page if not logged in
@@ -258,8 +268,8 @@ const App: React.FC = () => {
               </div>
               
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-700">Admin DapurKu</p>
-                <p className="text-xs text-gray-500">{new Date().toLocaleDateString('id-ID', { weekday: 'long' })}</p>
+                <p className="text-sm font-medium text-gray-700">{currentUser?.username || 'Admin'}</p>
+                <p className="text-xs text-gray-500 capitalize">{currentUser?.role || 'admin'}</p>
               </div>
               <button
                 onClick={() => setShowLogoutConfirm(true)}
@@ -269,7 +279,7 @@ const App: React.FC = () => {
                 {storeLogo ? (
                   <img src={storeLogo} alt="Logo" className="w-full h-full object-cover" />
                 ) : (
-                  'A'
+                  (currentUser?.username || 'A').charAt(0).toUpperCase()
                 )}
               </button>
             </div>
@@ -315,7 +325,7 @@ const App: React.FC = () => {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Konfirmasi Logout</h3>
               <p className="text-sm text-gray-600 mb-6">
-                Anda akan keluar dari aplikasi. Semua data lokal akan dihapus. Lanjutkan?
+                Anda akan keluar dari aplikasi. Lanjutkan?
               </p>
               <div className="flex gap-3">
                 <button
