@@ -87,22 +87,31 @@ export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Prom
     id: generateId(),
   };
   
+  console.log('🔥 Adding transaction to Firebase...', newTransaction);
+  
   // Save to Firebase first
   if (isFirebaseConfigured()) {
     try {
-      const firebaseId = await transactionService.add(transaction);
+      console.log('✅ Firebase is configured, attempting to save...');
+      const firebaseId = await transactionService.add(newTransaction);
       if (firebaseId) {
         newTransaction.id = firebaseId;
+        console.log('✅ Transaction saved to Firebase with ID:', firebaseId);
+      } else {
+        console.error('❌ Failed to save transaction to Firebase - no ID returned');
       }
     } catch (error) {
-      console.error('Error adding transaction to Firebase:', error);
+      console.error('❌ Error adding transaction to Firebase:', error);
     }
+  } else {
+    console.warn('⚠️ Firebase is not configured, saving to localStorage only');
   }
   
   // Update localStorage cache
   const currentTransactions = await getTransactions();
   currentTransactions.push(newTransaction);
   localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(currentTransactions));
+  console.log('✅ Transaction saved to localStorage');
   
   return newTransaction;
 };

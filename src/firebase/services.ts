@@ -127,12 +127,19 @@ export const transactionService = {
     
     try {
       const transactionCollection = collection(db, 'transactions');
-      const q = query(transactionCollection, orderBy('date', 'desc'));
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      // Remove orderBy to avoid index issues - sort client-side instead
+      const querySnapshot = await getDocs(transactionCollection);
+      const transactions = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Transaction[];
+      
+      // Sort by date descending on client-side
+      return transactions.sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateB - dateA; // Descending order
+      });
     } catch (error) {
       console.error('Error getting transactions:', error);
       return [];
@@ -144,14 +151,21 @@ export const transactionService = {
     if (!isFirebaseConfigured() || !db) return () => {};
     
     const transactionCollection = collection(db, 'transactions');
-    const q = query(transactionCollection, orderBy('date', 'desc'));
-    
-    return onSnapshot(q, (snapshot) => {
+    // Remove orderBy to avoid index issues - sort client-side instead
+    return onSnapshot(transactionCollection, (snapshot) => {
       const transactions = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Transaction[];
-      callback(transactions);
+      
+      // Sort by date descending on client-side
+      const sorted = transactions.sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateB - dateA; // Descending order
+      });
+      
+      callback(sorted);
     });
   },
 
