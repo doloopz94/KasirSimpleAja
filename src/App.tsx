@@ -31,11 +31,21 @@ const App: React.FC = () => {
     return 'DapurKu';
   };
 
+  const getStoreTagline = () => {
+    const saved = localStorage.getItem('dapurku_settings');
+    if (saved) {
+      const settings = JSON.parse(saved);
+      return settings.storeTagline || 'Makanan Rumahan Online';
+    }
+    return 'Makanan Rumahan Online';
+  };
+
   const getStoreLogo = () => {
     return localStorage.getItem('dapurku_logo') || '';
   };
 
   const storeName = getStoreName();
+  const storeTagline = getStoreTagline();
   const storeLogo = getStoreLogo();
 
   // Check if user is already logged in and setup Firebase
@@ -82,7 +92,7 @@ const App: React.FC = () => {
 
   // Update document title and favicon dynamically
   useEffect(() => {
-    document.title = `${storeName} - Sistem Manajemen Penjualan`;
+    document.title = `${storeName} - ${storeTagline}`;
     
     // Update favicon if logo exists
     if (storeLogo) {
@@ -94,7 +104,7 @@ const App: React.FC = () => {
       }
       link.href = storeLogo;
     }
-  }, [storeName, storeLogo]);
+  }, [storeName, storeTagline, storeLogo]);
 
   const handleLogin = (username: string, role: string) => {
     setIsLoggedIn(true);
@@ -209,7 +219,7 @@ const App: React.FC = () => {
             )}
             <div>
               <h1 className="font-bold text-gray-800 text-lg">{storeName}</h1>
-              <p className="text-xs text-gray-500">Makanan Rumahan</p>
+              <p className="text-xs text-gray-500">{storeTagline}</p>
             </div>
           </div>
         </div>

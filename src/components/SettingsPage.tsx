@@ -1,12 +1,48 @@
-import React, { useState } from 'react';
-import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X, Wifi, WifiOff, Cloud, Globe, Users, Bot } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X, Wifi, WifiOff, Cloud, Globe, Users, Bot, Upload, Image as ImageIcon } from 'lucide-react';
 import UserManagement from './UserManagement';
 import AIPromotionSettings from './AIPromotionSettings';
+
+interface StoreSettings {
+  storeName: string;
+  storeTagline: string;
+  storeAddress: string;
+  storePhone: string;
+  storeLogo: string;
+}
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'account' | 'users' | 'qris' | 'printer' | 'receipt' | 'ai'>('account');
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  
+  // Store settings state
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
+    storeName: 'DapurKu',
+    storeTagline: 'Makanan Rumahan Online',
+    storeAddress: 'Jl. Contoh No. 123, Jakarta',
+    storePhone: '0812-3456-7890',
+    storeLogo: '',
+  });
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('dapurku_settings');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setStoreSettings({
+          storeName: parsed.storeName || 'DapurKu',
+          storeTagline: parsed.storeTagline || 'Makanan Rumahan Online',
+          storeAddress: parsed.storeAddress || '',
+          storePhone: parsed.storePhone || '',
+          storeLogo: parsed.storeLogo || '',
+        });
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    }
+  }, []);
 
   const tabs = [
     { key: 'account' as const, label: 'Akun Toko', icon: Store },
@@ -16,6 +52,25 @@ const SettingsPage: React.FC = () => {
     { key: 'receipt' as const, label: 'Nota', icon: FileText },
     { key: 'ai' as const, label: 'AI Model', icon: Bot },
   ];
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setStoreSettings({ ...storeSettings, storeLogo: base64 });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveSettings = () => {
+    localStorage.setItem('dapurku_settings', JSON.stringify(storeSettings));
+    localStorage.setItem('dapurku_logo', storeSettings.storeLogo);
+    setShowSaveSuccess(true);
+    setTimeout(() => setShowSaveSuccess(false), 2000);
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -66,6 +121,47 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Logo Upload */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <ImageIcon size={14} className="inline mr-1.5" />
+                Logo Toko
+              </label>
+              <div className="flex items-start gap-4">
+                <div className="w-24 h-24 border-2 border-gray-200 rounded-xl flex items-center justify-center overflow-hidden bg-gray-50">
+                  {storeSettings.storeLogo ? (
+                    <img src={storeSettings.storeLogo} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon size={32} className="text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium cursor-pointer transition-colors">
+                    <Upload size={16} />
+                    Upload Logo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Format: JPG, PNG, atau SVG. Maksimal 2MB.
+                  </p>
+                  {storeSettings.storeLogo && (
+                    <button
+                      onClick={() => setStoreSettings({ ...storeSettings, storeLogo: '' })}
+                      className="text-xs text-red-600 hover:text-red-700 mt-2"
+                    >
+                      Hapus Logo
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Store Name */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <Store size={14} className="inline mr-1.5" />
@@ -73,25 +169,47 @@ const SettingsPage: React.FC = () => {
               </label>
               <input
                 type="text"
-                defaultValue="DapurKu"
+                value={storeSettings.storeName}
+                onChange={(e) => setStoreSettings({ ...storeSettings, storeName: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Nama toko Anda"
               />
             </div>
 
+            {/* Tagline */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FileText size={14} className="inline mr-1.5" />
+                Tagline / Slogan
+              </label>
+              <input
+                type="text"
+                value={storeSettings.storeTagline}
+                onChange={(e) => setStoreSettings({ ...storeSettings, storeTagline: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Makanan Rumahan Online"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Tagline akan muncul di nota dan header aplikasi
+              </p>
+            </div>
+
+            {/* Address */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <Store size={14} className="inline mr-1.5" />
                 Alamat Toko
               </label>
               <textarea
-                defaultValue="Jl. Contoh No. 123, Jakarta"
+                value={storeSettings.storeAddress}
+                onChange={(e) => setStoreSettings({ ...storeSettings, storeAddress: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
                 rows={2}
                 placeholder="Alamat lengkap toko"
               />
             </div>
 
+            {/* Phone */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <User size={14} className="inline mr-1.5" />
@@ -99,12 +217,25 @@ const SettingsPage: React.FC = () => {
               </label>
               <input
                 type="tel"
-                defaultValue="0812-3456-7890"
+                value={storeSettings.storePhone}
+                onChange={(e) => setStoreSettings({ ...storeSettings, storePhone: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="0812-3456-7890"
               />
             </div>
 
+            {/* Save Button */}
+            <div className="pt-4 border-t border-gray-100">
+              <button
+                onClick={handleSaveSettings}
+                className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors"
+              >
+                <Save size={18} />
+                Simpan Pengaturan Toko
+              </button>
+            </div>
+
+            {/* Logout Button */}
             <div className="pt-4 border-t border-gray-100">
               <button
                 onClick={() => setShowLogoutConfirm(true)}
@@ -262,12 +393,9 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Save Button */}
-      {activeTab !== 'users' && activeTab !== 'ai' && (
+      {activeTab !== 'users' && activeTab !== 'ai' && activeTab !== 'account' && (
         <button
-          onClick={() => {
-            setShowSaveSuccess(true);
-            setTimeout(() => setShowSaveSuccess(false), 2000);
-          }}
+          onClick={handleSaveSettings}
           className="w-full py-3.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-200/50 active:scale-[0.98]"
         >
           <Save size={20} />
