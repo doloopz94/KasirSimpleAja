@@ -18,55 +18,91 @@ const defaultMenu: MenuItem[] = [
 ];
 
 // Menu Items
-export const getMenuItems = (): MenuItem[] => {
+export const getMenuItems = async (): Promise<MenuItem[]> => {
+  // Try Firebase first
+  if (isFirebaseConfigured()) {
+    try {
+      const firebaseMenu = await menuService.getAll();
+      if (firebaseMenu && firebaseMenu.length > 0) {
+        // Cache to localStorage
+        localStorage.setItem(MENU_KEY, JSON.stringify(firebaseMenu));
+        return firebaseMenu;
+      }
+    } catch (error) {
+      console.error('Error fetching menu from Firebase:', error);
+    }
+  }
+  
+  // Fallback to localStorage
   const data = localStorage.getItem(MENU_KEY);
   if (data) return JSON.parse(data);
   
+  // No data, use default
   localStorage.setItem(MENU_KEY, JSON.stringify(defaultMenu));
+  if (isFirebaseConfigured()) {
+    await menuService.saveAll(defaultMenu);
+  }
   return defaultMenu;
 };
 
 export const saveMenuItems = async (items: MenuItem[]) => {
-  // Save to localStorage
+  // Save to localStorage first (for immediate UI update)
   localStorage.setItem(MENU_KEY, JSON.stringify(items));
   
-  // Save to Firebase if configured
+  // Save to Firebase
   if (isFirebaseConfigured()) {
-    await menuService.saveAll(items);
+    try {
+      await menuService.saveAll(items);
+    } catch (error) {
+      console.error('Error saving menu to Firebase:', error);
+    }
   }
 };
 
 // Transactions
-export const getTransactions = (): Transaction[] => {
+export const getTransactions = async (): Promise<Transaction[]> => {
+  // Try Firebase first
+  if (isFirebaseConfigured()) {
+    try {
+      const firebaseTransactions = await transactionService.getAll();
+      if (firebaseTransactions) {
+        // Cache to localStorage
+        localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(firebaseTransactions));
+        return firebaseTransactions;
+      }
+    } catch (error) {
+      console.error('Error fetching transactions from Firebase:', error);
+    }
+  }
+  
+  // Fallback to localStorage
   const data = localStorage.getItem(TRANSACTIONS_KEY);
   if (data) return JSON.parse(data);
   return [];
 };
 
-export const saveTransactions = async (transactions: Transaction[]) => {
-  // Save to localStorage
-  localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
-  
-  // Note: For Firebase, we add transactions one by one via addTransaction
-};
-
 export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Promise<Transaction | null> => {
-  // Add to localStorage
-  const transactions = getTransactions();
   const newTransaction: Transaction = {
     ...transaction,
     id: generateId(),
   };
-  transactions.push(newTransaction);
-  localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
   
-  // Add to Firebase if configured
+  // Save to Firebase first
   if (isFirebaseConfigured()) {
-    const firebaseId = await transactionService.add(transaction);
-    if (firebaseId) {
-      newTransaction.id = firebaseId;
+    try {
+      const firebaseId = await transactionService.add(transaction);
+      if (firebaseId) {
+        newTransaction.id = firebaseId;
+      }
+    } catch (error) {
+      console.error('Error adding transaction to Firebase:', error);
     }
   }
+  
+  // Update localStorage cache
+  const currentTransactions = await getTransactions();
+  currentTransactions.push(newTransaction);
+  localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(currentTransactions));
   
   return newTransaction;
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Page, MenuItem, Transaction } from './types';
 import { getMenuItems, saveMenuItems, getTransactions, addTransaction, subscribeToMenu, subscribeToTransactions, getFirebaseStatus } from './store';
+import { isFirebaseConfigured } from './firebase/config';
 import Dashboard from './components/Dashboard';
 import MenuManagement from './components/MenuManagement';
 import TransactionPage from './components/TransactionPage';
@@ -98,6 +99,7 @@ const App: React.FC = () => {
   const handleLogin = (username: string, role: string) => {
     setIsLoggedIn(true);
     setCurrentUser({ username, role });
+    setShowLogoutConfirm(false); // Reset logout state
   };
 
   const handleSaveMenu = async (items: MenuItem[]) => {
@@ -108,8 +110,19 @@ const App: React.FC = () => {
   };
 
   const handleSaveTransaction = async (transaction: Transaction) => {
-    // Save to Firebase (real-time subscription akan update UI otomatis)
-    await addTransaction(transaction);
+    // Save to Firebase and localStorage
+    const savedTransaction = await addTransaction(transaction);
+    
+    // Update UI immediately with the saved transaction
+    if (savedTransaction) {
+      setTransactions(prev => [...prev, savedTransaction]);
+    }
+    
+    // Reload all transactions from Firebase to ensure sync
+    if (isFirebaseConfigured()) {
+      const allTransactions = await getTransactions();
+      setTransactions(allTransactions);
+    }
   };
 
   const handleLogout = () => {

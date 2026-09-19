@@ -256,7 +256,7 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
                   <img 
                     src={storeLogo} 
                     alt={storeName}
-                    className="w-16 h-16 mx-auto mb-2 object-contain"
+                    className="w-12 h-12 mx-auto mb-2 object-contain"
                   />
                 )}
                 <h1 className="text-lg font-bold text-gray-800">{storeName}</h1>

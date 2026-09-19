@@ -121,6 +121,9 @@ class ThermalPrinterService {
       throw new Error('Printer tidak terhubung');
     }
 
+    // Clean text - remove any non-ASCII characters that might cause issues
+    const cleanText = text.replace(/[^\x00-\x7F]/g, '');
+
     const commands: number[] = [];
 
     // Set alignment
@@ -132,15 +135,18 @@ class ThermalPrinterService {
       commands.push(0x1B, 0x45, 0x01);
     }
 
-    // Convert text to bytes (handle Indonesian characters)
-    const encoder = new TextEncoder();
-    const textBytes = encoder.encode(text);
-    commands.push(...textBytes);
+    // Convert text to bytes - use simple ASCII encoding
+    for (let i = 0; i < cleanText.length; i++) {
+      commands.push(cleanText.charCodeAt(i));
+    }
 
     // Reset bold
     if (bold) {
       commands.push(0x1B, 0x45, 0x00);
     }
+
+    // Reset alignment
+    commands.push(0x1B, 0x61, 0x00);
 
     // Line feed
     commands.push(0x0A);

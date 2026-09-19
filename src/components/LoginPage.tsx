@@ -197,13 +197,6 @@ const LoginPage: React.FC<Props> = ({ onLogin }) => {
               )}
             </button>
           </form>
-
-          {/* Info */}
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <p className="text-xs text-gray-500 text-center">
-              Default: username <span className="font-semibold">admin</span> | PIN <span className="font-semibold">139755</span>
-            </p>
-          </div>
         </div>
 
         {/* Footer */}
