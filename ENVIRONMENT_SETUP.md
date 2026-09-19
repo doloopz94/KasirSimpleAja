@@ -11,9 +11,9 @@ File ini berisi panduan untuk mengelola environment variables dengan aman.
 ### Firebase Configuration
 ```bash
 VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain_here
 VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket_here
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
@@ -68,9 +68,9 @@ Setelah menambahkan semua variables:
 ```javascript
 const firebaseConfig = {
   apiKey: "AIza...",
-  authDomain: "your-project.firebaseapp.com",
+  authDomain: "your_auth_domain_here",
   projectId: "your-project",
-  storageBucket: "your-project.appspot.com",
+  storageBucket: "your_storage_bucket_here",
   messagingSenderId: "123456789",
   appId: "1:123:web:abc",
   measurementId: "G-XXX"

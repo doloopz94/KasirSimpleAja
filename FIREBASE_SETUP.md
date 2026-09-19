@@ -38,9 +38,9 @@
 ```javascript
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  authDomain: "YOUR_AUTH_DOMAIN_HERE",
   projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  storageBucket: "YOUR_STORAGE_BUCKET_HERE",
   messagingSenderId: "YOUR_SENDER_ID",
   appId: "YOUR_APP_ID"
 };
@@ -54,9 +54,9 @@ const firebaseConfig = {
 ```typescript
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY_HERE", // Ganti dengan API key Anda
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  authDomain: "YOUR_AUTH_DOMAIN_HERE",
   projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  storageBucket: "YOUR_STORAGE_BUCKET_HERE",
   messagingSenderId: "YOUR_SENDER_ID",
   appId: "YOUR_APP_ID"
 };

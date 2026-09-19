@@ -173,9 +173,9 @@ Edit `src/firebase/config.ts`:
 ```typescript
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  authDomain: "YOUR_AUTH_DOMAIN_HERE",
   projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
+  storageBucket: "YOUR_STORAGE_BUCKET_HERE",
   messagingSenderId: "YOUR_SENDER_ID",
   appId: "YOUR_APP_ID"
 };

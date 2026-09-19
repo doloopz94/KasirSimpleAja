@@ -81,9 +81,9 @@ git push -u origin main
 | Key | Value |
 |-----|-------|
 | `VITE_FIREBASE_API_KEY` | `AIzaSy...` (dari Firebase Console) |
-| `VITE_FIREBASE_AUTH_DOMAIN` | `your-project.firebaseapp.com` |
+| `VITE_FIREBASE_AUTH_DOMAIN` | `your_auth_domain_here` |
 | `VITE_FIREBASE_PROJECT_ID` | `your-project-id` |
-| `VITE_FIREBASE_STORAGE_BUCKET` | `your-project-id.appspot.com` |
+| `VITE_FIREBASE_STORAGE_BUCKET` | `your_storage_bucket_here` |
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | `123456789` |
 | `VITE_FIREBASE_APP_ID` | `1:123456789:web:abc123` |
 
@@ -108,9 +108,9 @@ netlify init
 
 # Setup env variables
 netlify env:set VITE_FIREBASE_API_KEY "your-api-key"
-netlify env:set VITE_FIREBASE_AUTH_DOMAIN "your-project.firebaseapp.com"
+netlify env:set VITE_FIREBASE_AUTH_DOMAIN "your_auth_domain_here"
 netlify env:set VITE_FIREBASE_PROJECT_ID "your-project-id"
-netlify env:set VITE_FIREBASE_STORAGE_BUCKET "your-project.appspot.com"
+netlify env:set VITE_FIREBASE_STORAGE_BUCKET "your_storage_bucket_here"
 netlify env:set VITE_FIREBASE_MESSAGING_SENDER_ID "your-sender-id"
 netlify env:set VITE_FIREBASE_APP_ID "your-app-id"
 
@@ -135,9 +135,9 @@ netlify deploy --prod
 
 ```bash
 VITE_FIREBASE_API_KEY=your_firebase_api_key_here
-VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain_here
 VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket_here
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id_here
 VITE_FIREBASE_APP_ID=your_app_id_here
 ```
