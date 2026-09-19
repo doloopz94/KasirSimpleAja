@@ -18,6 +18,12 @@ const SettingsPage: React.FC = () => {
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   
+  // Printer state
+  const [printerConnected, setPrinterConnected] = useState(false);
+  const [printerName, setPrinterName] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  
   // Store settings state
   const [storeSettings, setStoreSettings] = useState<StoreSettings>({
     storeName: 'DapurKu',
@@ -76,6 +82,39 @@ const SettingsPage: React.FC = () => {
     localStorage.setItem('dapurku_logo', storeSettings.storeLogo);
     setShowSaveSuccess(true);
     setTimeout(() => setShowSaveSuccess(false), 2000);
+  };
+
+  const handleConnectPrinter = async () => {
+    setIsConnecting(true);
+    try {
+      // Simulasi koneksi printer (dalam implementasi nyata, ini akan memanggil API printer)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Simulasi berhasil connect
+      setPrinterConnected(true);
+      setPrinterName(`${storeSettings.printerConnection.toUpperCase()} Printer`);
+      
+      alert(`Printer berhasil terhubung via ${storeSettings.printerConnection}!`);
+    } catch (error) {
+      console.error('Error connecting printer:', error);
+      alert('Gagal menghubungkan printer. Silakan coba lagi.');
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleTestPrint = async () => {
+    setIsPrinting(true);
+    try {
+      // Simulasi test print
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      alert('Test print berhasil! Struk contoh telah dicetak.');
+    } catch (error) {
+      console.error('Error test print:', error);
+      alert('Gagal melakukan test print. Silakan coba lagi.');
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   const handleLogout = () => {
@@ -308,6 +347,29 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Status Koneksi Printer */}
+            <div className={`rounded-xl p-4 border-2 ${
+              printerConnected 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${
+                    printerConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+                  }`}></div>
+                  <div>
+                    <p className="font-semibold text-sm text-gray-800">
+                      Status: {printerConnected ? 'Terhubung' : 'Tidak Terhubung'}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {printerConnected ? printerName : 'Klik tombol di bawah untuk menghubungkan printer'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Metode Koneksi
@@ -375,6 +437,64 @@ const SettingsPage: React.FC = () => {
                   80mm
                 </button>
               </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3 pt-4 border-t border-gray-200">
+              <button
+                onClick={handleConnectPrinter}
+                disabled={isConnecting}
+                className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors ${
+                  printerConnected
+                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isConnecting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Menghubungkan...
+                  </>
+                ) : printerConnected ? (
+                  <>
+                    <X size={18} />
+                    Putuskan Koneksi
+                  </>
+                ) : (
+                  <>
+                    <PrinterIcon size={18} />
+                    Hubungkan Printer
+                  </>
+                )}
+              </button>
+
+              {printerConnected && (
+                <button
+                  onClick={handleTestPrint}
+                  disabled={isPrinting}
+                  className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isPrinting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Mencetak...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={18} />
+                      Test Cetak
+                    </>
+                  )}
+                </button>
+              )}
+
+              <button
+                onClick={handleSaveSettings}
+                className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-200/50 active:scale-[0.98]"
+              >
+                <Save size={20} />
+                Simpan Pengaturan
+              </button>
             </div>
           </div>
         )}
