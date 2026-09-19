@@ -116,7 +116,7 @@ Hasil AI:
 
 ### API yang Digunakan
 - **Provider**: OpenRouter AI
-- **Model**: Qwen 3.8 27B (Free)
+- **Model**: Ling 3.0 Flash VL (Free)
 - **Endpoint**: `https://openrouter.ai/api/v1/chat/completions`
 
 ### Rate Limit

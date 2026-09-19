@@ -71,9 +71,9 @@ ${menuList}
 - Format dalam bahasa Indonesia
 - Jangan gunakan markdown, gunakan plain text dengan emoji`;
 
-    // Call OpenRouter API with stable model
+    // Call OpenRouter API with Ling 3.0 Flash VL model
     console.log('Calling OpenRouter API...');
-    console.log('Model: google/gemma-3-12b-it:free');
+    console.log('Model: inclusionai/ling-3.0-flash-vl:free');
     
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -84,7 +84,7 @@ ${menuList}
         'X-Title': 'DapurKu - Promotion Generator'
       },
       body: JSON.stringify({
-        model: 'google/gemma-3-12b-it:free',
+        model: 'inclusionai/ling-3.0-flash-vl:free',
         messages: [
           {
             role: 'system',
