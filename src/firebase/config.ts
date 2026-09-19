@@ -29,8 +29,8 @@ const analytics = getAnalytics(app);
 
 // Check if Firebase is configured
 export const isFirebaseConfigured = () => {
-  return firebaseConfig.apiKey !== "YOUR_API_KEY" && 
-         firebaseConfig.projectId !== "YOUR_PROJECT_ID";
+  return firebaseConfig.apiKey !== "AIzaSyDC9EFmGkqvwDteJ7fMh_ydlTIedi6ydUA" && 
+         firebaseConfig.projectId !== "dapurku-app";
 };
 
 // Initialize Firebase only if configured
