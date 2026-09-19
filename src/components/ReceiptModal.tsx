@@ -30,7 +30,8 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
         storeTagline: settings.storeTagline || 'Makanan Rumahan Online',
         storeAddress: settings.storeAddress || '',
         storePhone: settings.storePhone || '',
-        printerConnectionMethod: settings.printerConnectionMethod || 'bluetooth'
+        printerConnection: settings.printerConnection || 'bluetooth',
+        printerPaperSize: settings.printerPaperSize || '80mm'
       };
     }
     return {
@@ -38,7 +39,8 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
       storeTagline: 'Makanan Rumahan Online',
       storeAddress: '',
       storePhone: '',
-      printerConnectionMethod: 'bluetooth'
+      printerConnection: 'bluetooth',
+      printerPaperSize: '80mm'
     };
   };
 
@@ -116,12 +118,12 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
     
     try {
       const storeInfo = getStoreInfo();
-      const { storeAddress, storePhone, printerConnectionMethod } = storeInfo;
+      const { storeAddress, storePhone, printerConnection } = storeInfo;
       
       // Try to print using the configured printer service
       let printSuccess = false;
       
-      if (printerConnectionMethod === 'bluetooth') {
+      if (printerConnection === 'bluetooth') {
         // Check if Bluetooth printer is connected
         const btState = thermalPrinter.getState();
         if (btState.connected) {
@@ -130,7 +132,7 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
         } else {
           throw new Error('Printer Bluetooth tidak terhubung. Silakan hubungkan terlebih dahulu di Settings.');
         }
-      } else if (printerConnectionMethod === 'wifi') {
+      } else if (printerConnection === 'wifi') {
         // Check if WiFi printer is connected
         const wifiState = wifiPrinter.getState();
         if (wifiState.connected) {
@@ -139,7 +141,7 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
         } else {
           throw new Error('Printer WiFi tidak terhubung. Silakan hubungkan terlebih dahulu di Settings.');
         }
-      } else if (printerConnectionMethod === 'cloud') {
+      } else if (printerConnection === 'cloud') {
         // Check if Cloud printer is connected
         const cloudState = cloudPrinter.getState();
         if (cloudState.connected) {

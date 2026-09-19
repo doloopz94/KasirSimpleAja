@@ -9,6 +9,8 @@ interface StoreSettings {
   storeAddress: string;
   storePhone: string;
   storeLogo: string;
+  printerConnection: 'bluetooth' | 'wifi' | 'cloud';
+  printerPaperSize: '58mm' | '80mm';
 }
 
 const SettingsPage: React.FC = () => {
@@ -23,6 +25,8 @@ const SettingsPage: React.FC = () => {
     storeAddress: 'Jl. Contoh No. 123, Jakarta',
     storePhone: '0812-3456-7890',
     storeLogo: '',
+    printerConnection: 'bluetooth',
+    printerPaperSize: '80mm',
   });
 
   // Load settings from localStorage on mount
@@ -37,6 +41,8 @@ const SettingsPage: React.FC = () => {
           storeAddress: parsed.storeAddress || '',
           storePhone: parsed.storePhone || '',
           storeLogo: parsed.storeLogo || '',
+          printerConnection: parsed.printerConnection || 'bluetooth',
+          printerPaperSize: parsed.printerPaperSize || '80mm',
         });
       } catch (error) {
         console.error('Error loading settings:', error);
@@ -307,15 +313,36 @@ const SettingsPage: React.FC = () => {
                 Metode Koneksi
               </label>
               <div className="grid grid-cols-3 gap-2">
-                <button className="py-3 px-4 rounded-xl border-2 border-blue-500 bg-blue-50 text-blue-700 text-sm font-medium flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => setStoreSettings({ ...storeSettings, printerConnection: 'bluetooth' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                    storeSettings.printerConnection === 'bluetooth'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
                   <Wifi size={16} />
                   Bluetooth
                 </button>
-                <button className="py-3 px-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 text-gray-600 text-sm font-medium flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => setStoreSettings({ ...storeSettings, printerConnection: 'wifi' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                    storeSettings.printerConnection === 'wifi'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
                   <Globe size={16} />
                   WiFi
                 </button>
-                <button className="py-3 px-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 text-gray-600 text-sm font-medium flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => setStoreSettings({ ...storeSettings, printerConnection: 'cloud' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                    storeSettings.printerConnection === 'cloud'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
                   <Cloud size={16} />
                   Cloud Print
                 </button>
@@ -327,10 +354,24 @@ const SettingsPage: React.FC = () => {
                 Ukuran Kertas
               </label>
               <div className="grid grid-cols-2 gap-2">
-                <button className="py-3 px-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 text-gray-600 text-sm font-medium">
+                <button 
+                  onClick={() => setStoreSettings({ ...storeSettings, printerPaperSize: '58mm' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                    storeSettings.printerPaperSize === '58mm'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
                   58mm
                 </button>
-                <button className="py-3 px-4 rounded-xl border-2 border-blue-500 bg-blue-50 text-blue-700 text-sm font-medium">
+                <button 
+                  onClick={() => setStoreSettings({ ...storeSettings, printerPaperSize: '80mm' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                    storeSettings.printerPaperSize === '80mm'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
                   80mm
                 </button>
               </div>
