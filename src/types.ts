@@ -18,8 +18,13 @@ export interface TransactionItem {
 export interface Transaction {
   id: string;
   items: TransactionItem[];
-  total: number;
+  subtotal: number;
+  discount?: number;
+  discountAmount?: number;
   deliveryFee?: number;
+  total: number;
+  paymentAmount?: number;
+  change?: number;
   customerName: string;
   customerPhone: string;
   paymentMethod: 'cash' | 'qris';
@@ -29,3 +34,16 @@ export interface Transaction {
 }
 
 export type Page = 'dashboard' | 'menu' | 'transaction' | 'reports' | 'promotion' | 'settings';
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  pin: string;
+  role: 'admin' | 'kasir' | 'owner';
+  fullName: string;
+  email?: string;
+  phone?: string;
+  isActive: boolean;
+  createdAt: string;
+  lastLogin?: string;
+}

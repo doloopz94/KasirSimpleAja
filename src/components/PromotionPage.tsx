@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { MenuItem } from '../types';
 import { formatCurrency } from '../store';
-import { Megaphone, Copy, CheckCircle, MessageCircle, Facebook, Sparkles, RefreshCw, Share2, Edit3, X, Image as ImageIcon } from 'lucide-react';
+import { Megaphone, Copy, CheckCircle, MessageCircle, Facebook, Sparkles, RefreshCw, Share2, Edit3, X, Image as ImageIcon, Bot, Loader2 } from 'lucide-react';
+import { openRouterService } from '../services/OpenRouterService';
 
 interface Props {
   menuItems: MenuItem[];
@@ -34,6 +35,9 @@ const PromotionPage: React.FC<Props> = ({ menuItems }) => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [promoDiscount, setPromoDiscount] = useState('');
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [additionalInfo, setAdditionalInfo] = useState('');
 
   const storeName = getStoreName();
   const storeLogo = getStoreLogo();
@@ -193,6 +197,49 @@ const PromotionPage: React.FC<Props> = ({ menuItems }) => {
     setCustomMessage('');
   };
 
+  const handleGenerateWithAI = async () => {
+    if (selectedMenuItems.length === 0) {
+      setAiError('Pilih minimal 1 menu untuk generate dengan AI');
+      setTimeout(() => setAiError(''), 3000);
+      return;
+    }
+
+    setIsGeneratingAI(true);
+    setAiError('');
+
+    try {
+      // Get saved AI model from localStorage
+      const savedModel = localStorage.getItem('ai_model') || 'inclusionai/ling-3.0-flash-vl:free';
+      
+      const response = await openRouterService.generatePromotion({
+        storeName,
+        menuItems: selectedMenuItems.map(item => ({
+          name: item.name,
+          price: item.price,
+          category: item.category
+        })),
+        style: selectedTemplate as any,
+        discount: promoDiscount ? parseInt(promoDiscount) : undefined,
+        additionalInfo: additionalInfo || undefined,
+        customModel: savedModel
+      });
+
+      if (response.success && response.message) {
+        setCustomMessage(response.message);
+        setIsEditing(true);
+      } else {
+        setAiError(response.error || 'Gagal generate pesan dengan AI');
+        setTimeout(() => setAiError(''), 5000);
+      }
+    } catch (error) {
+      console.error('AI generation error:', error);
+      setAiError('Terjadi kesalahan saat generate dengan AI');
+      setTimeout(() => setAiError(''), 5000);
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
   const toggleItemSelection = (id: string) => {
     setSelectedItems(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -272,6 +319,51 @@ const PromotionPage: React.FC<Props> = ({ menuItems }) => {
                 />
               </div>
             )}
+
+            {/* Additional Info Input */}
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                Informasi Tambahan (Opsional)
+              </label>
+              <textarea
+                value={additionalInfo}
+                onChange={(e) => setAdditionalInfo(e.target.value)}
+                placeholder="Contoh: Gratis ongkir, buka sampai jam 9 malam, dll"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                rows={2}
+              />
+            </div>
+
+            {/* AI Generate Button */}
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <button
+                onClick={handleGenerateWithAI}
+                disabled={isGeneratingAI || selectedMenuItems.length === 0}
+                className={`w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                  isGeneratingAI
+                    ? 'bg-purple-400 text-white cursor-not-allowed'
+                    : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg shadow-purple-200/50'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isGeneratingAI ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Generating dengan AI...
+                  </>
+                ) : (
+                  <>
+                    <Bot size={18} />
+                    Generate dengan AI ✨
+                  </>
+                )}
+              </button>
+              {aiError && (
+                <p className="text-xs text-red-600 mt-2 text-center">{aiError}</p>
+              )}
+              <p className="text-[10px] text-gray-500 mt-2 text-center">
+                💡 AI akan membuat pesan promosi yang lebih menarik dan kreatif
+              </p>
+            </div>
           </div>
 
           {/* Menu Selection */}

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Lock, User, Eye, EyeOff, ChefHat } from 'lucide-react';
+import { userService } from '../firebase/userService';
+import { isFirebaseConfigured } from '../firebase/config';
 
 interface Props {
-  onLogin: (username: string) => void;
+  onLogin: (username: string, role: string) => void;
 }
 
 const LoginPage: React.FC<Props> = ({ onLogin }) => {
@@ -12,7 +14,6 @@ const LoginPage: React.FC<Props> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get store name from settings
   const getStoreName = () => {
     const saved = localStorage.getItem('dapurku_settings');
     if (saved) {
@@ -29,25 +30,73 @@ const LoginPage: React.FC<Props> = ({ onLogin }) => {
   const storeName = getStoreName();
   const storeLogo = getStoreLogo();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    // Simulate loading
-    setTimeout(() => {
-      if (username === 'admin' && pin === '139755') {
-        localStorage.setItem('dapurku_auth', JSON.stringify({
-          username,
-          loginTime: new Date().toISOString(),
-        }));
-        onLogin(username);
-      } else {
-        setError('Username atau PIN salah. Silakan coba lagi.');
-        setPin('');
+    try {
+      // Check if Firebase is configured
+      if (!isFirebaseConfigured()) {
+        // Fallback to default admin account
+        if (username === 'admin' && pin === '139755') {
+          localStorage.setItem('dapurku_auth', JSON.stringify({
+            username,
+            role: 'admin',
+            loginTime: new Date().toISOString(),
+          }));
+          onLogin(username, 'admin');
+        } else {
+          setError('Username atau PIN salah. Silakan coba lagi.');
+          setPin('');
+        }
+        setIsLoading(false);
+        return;
       }
+
+      // Check user in Firebase
+      const user = await userService.getUserByUsername(username);
+
+      if (!user) {
+        setError('Username tidak ditemukan');
+        setPin('');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!user.isActive) {
+        setError('Akun Anda telah dinonaktifkan. Hubungi administrator.');
+        setPin('');
+        setIsLoading(false);
+        return;
+      }
+
+      if (user.pin !== pin) {
+        setError('PIN salah. Silakan coba lagi.');
+        setPin('');
+        setIsLoading(false);
+        return;
+      }
+
+      // Update last login
+      await userService.updateLastLogin(user.id);
+
+      // Save auth info
+      localStorage.setItem('dapurku_auth', JSON.stringify({
+        username: user.username,
+        role: user.role,
+        userId: user.id,
+        loginTime: new Date().toISOString(),
+      }));
+
+      onLogin(user.username, user.role);
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Terjadi kesalahan. Silakan coba lagi.');
+      setPin('');
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -148,13 +197,6 @@ const LoginPage: React.FC<Props> = ({ onLogin }) => {
               )}
             </button>
           </form>
-
-          {/* Info */}
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <p className="text-xs text-gray-500 text-center">
-              Default: username <span className="font-semibold">admin</span> | PIN <span className="font-semibold">139755</span>
-            </p>
-          </div>
         </div>
 
         {/* Footer */}

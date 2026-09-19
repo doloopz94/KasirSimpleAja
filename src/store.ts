@@ -18,57 +18,179 @@ const defaultMenu: MenuItem[] = [
 ];
 
 // Menu Items
-export const getMenuItems = (): MenuItem[] => {
+export const getMenuItems = async (): Promise<MenuItem[]> => {
+  // Try Firebase first
+  if (isFirebaseConfigured()) {
+    try {
+      const firebaseMenu = await menuService.getAll();
+      if (firebaseMenu && firebaseMenu.length > 0) {
+        // Cache to localStorage
+        localStorage.setItem(MENU_KEY, JSON.stringify(firebaseMenu));
+        return firebaseMenu;
+      }
+    } catch (error) {
+      console.error('Error fetching menu from Firebase:', error);
+    }
+  }
+  
+  // Fallback to localStorage
   const data = localStorage.getItem(MENU_KEY);
   if (data) return JSON.parse(data);
   
+  // No data, use default
   localStorage.setItem(MENU_KEY, JSON.stringify(defaultMenu));
+  if (isFirebaseConfigured()) {
+    await menuService.saveAll(defaultMenu);
+  }
   return defaultMenu;
 };
 
 export const saveMenuItems = async (items: MenuItem[]) => {
-  // Save to localStorage
+  // Save to localStorage first (for immediate UI update)
   localStorage.setItem(MENU_KEY, JSON.stringify(items));
   
-  // Save to Firebase if configured
+  // Save to Firebase
   if (isFirebaseConfigured()) {
-    await menuService.saveAll(items);
+    try {
+      await menuService.saveAll(items);
+    } catch (error) {
+      console.error('Error saving menu to Firebase:', error);
+    }
   }
 };
 
 // Transactions
-export const getTransactions = (): Transaction[] => {
+export const getTransactions = async (): Promise<Transaction[]> => {
+  // Try Firebase first
+  if (isFirebaseConfigured()) {
+    try {
+      const firebaseTransactions = await transactionService.getAll();
+      if (firebaseTransactions) {
+        // Cache to localStorage
+        localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(firebaseTransactions));
+        return firebaseTransactions;
+      }
+    } catch (error) {
+      console.error('Error fetching transactions from Firebase:', error);
+    }
+  }
+  
+  // Fallback to localStorage
   const data = localStorage.getItem(TRANSACTIONS_KEY);
   if (data) return JSON.parse(data);
   return [];
 };
 
-export const saveTransactions = async (transactions: Transaction[]) => {
-  // Save to localStorage
-  localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
-  
-  // Note: For Firebase, we add transactions one by one via addTransaction
-};
-
 export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Promise<Transaction | null> => {
-  // Add to localStorage
-  const transactions = getTransactions();
   const newTransaction: Transaction = {
     ...transaction,
     id: generateId(),
   };
-  transactions.push(newTransaction);
-  localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
   
-  // Add to Firebase if configured
+  console.log('🔥 Adding transaction to Firebase...', newTransaction);
+  
+  // Save to Firebase first
   if (isFirebaseConfigured()) {
-    const firebaseId = await transactionService.add(transaction);
-    if (firebaseId) {
-      newTransaction.id = firebaseId;
+    try {
+      console.log('✅ Firebase is configured, attempting to save...');
+      const firebaseId = await transactionService.add(newTransaction);
+      if (firebaseId) {
+        newTransaction.id = firebaseId;
+        console.log('✅ Transaction saved to Firebase with ID:', firebaseId);
+      } else {
+        console.error('❌ Failed to save transaction to Firebase - no ID returned');
+      }
+    } catch (error) {
+      console.error('❌ Error adding transaction to Firebase:', error);
+    }
+  } else {
+    console.warn('⚠️ Firebase is not configured, saving to localStorage only');
+  }
+  
+  // Update localStorage cache
+  const currentTransactions = await getTransactions();
+  currentTransactions.push(newTransaction);
+  localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(currentTransactions));
+  console.log('✅ Transaction saved to localStorage');
+  
+  return newTransaction;
+};
+
+export const updateTransaction = async (id: string, updates: Partial<Transaction>): Promise<boolean> => {
+  // Update in Firebase
+  if (isFirebaseConfigured()) {
+    try {
+      const success = await transactionService.update(id, updates);
+      if (success) {
+        // Update localStorage cache
+        const currentTransactions = await getTransactions();
+        const updatedTransactions = currentTransactions.map(t => 
+          t.id === id ? { ...t, ...updates } : t
+        );
+        localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+        return true;
+      }
+    } catch (error) {
+      console.error('Error updating transaction in Firebase:', error);
     }
   }
   
-  return newTransaction;
+  // Fallback to localStorage only
+  const currentTransactions = await getTransactions();
+  const updatedTransactions = currentTransactions.map(t => 
+    t.id === id ? { ...t, ...updates } : t
+  );
+  localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+  return true;
+};
+
+export const deleteTransaction = async (id: string): Promise<boolean> => {
+  console.log('🗑️ Deleting transaction:', id);
+  
+  let firebaseSuccess = false;
+  
+  // Delete from Firebase
+  if (isFirebaseConfigured()) {
+    try {
+      console.log('📡 Attempting to delete from Firebase...');
+      firebaseSuccess = await transactionService.delete(id);
+      
+      if (firebaseSuccess) {
+        console.log('✅ Transaction deleted from Firebase');
+        
+        // Wait a bit for Firebase to sync
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Update localStorage cache
+        const currentTransactions = await getTransactions();
+        const updatedTransactions = currentTransactions.filter(t => t.id !== id);
+        localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+        console.log('✅ LocalStorage updated, remaining transactions:', updatedTransactions.length);
+        
+        return true;
+      } else {
+        console.error('❌ Failed to delete from Firebase');
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error deleting transaction from Firebase:', error);
+      return false;
+    }
+  } else {
+    console.warn('⚠️ Firebase not configured, deleting from localStorage only');
+    
+    // Delete from localStorage only
+    try {
+      const currentTransactions = await getTransactions();
+      const updatedTransactions = currentTransactions.filter(t => t.id !== id);
+      localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+      console.log('✅ LocalStorage updated, remaining transactions:', updatedTransactions.length);
+      return true;
+    } catch (error) {
+      console.error('❌ Error updating localStorage:', error);
+      return false;
+    }
+  }
 };
 
 // Firebase Real-time Subscriptions
