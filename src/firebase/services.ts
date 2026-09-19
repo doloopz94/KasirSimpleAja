@@ -171,14 +171,34 @@ export const transactionService = {
 
   // Add new transaction
   add: async (transaction: Omit<Transaction, 'id'>): Promise<string | null> => {
-    if (!isFirebaseConfigured() || !db) return null;
+    if (!isFirebaseConfigured() || !db) {
+      console.warn('⚠️ Firebase not configured or db is null');
+      return null;
+    }
     
     try {
+      console.log('📝 Preparing to save transaction to Firebase...');
+      console.log('Transaction data:', transaction);
+      
       const transactionCollection = collection(db, 'transactions');
-      const docRef = await addDoc(transactionCollection, transaction);
+      
+      // Clean data - remove undefined values
+      const cleanData = JSON.parse(JSON.stringify(transaction));
+      console.log('Clean data to save:', cleanData);
+      
+      const docRef = await addDoc(transactionCollection, cleanData);
+      console.log('✅ Transaction saved with ID:', docRef.id);
+      
       return docRef.id;
     } catch (error) {
-      console.error('Error adding transaction:', error);
+      console.error('❌ Error adding transaction to Firebase:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      }
       return null;
     }
   },
