@@ -219,14 +219,38 @@ export const transactionService = {
 
   // Delete transaction
   delete: async (id: string): Promise<boolean> => {
-    if (!isFirebaseConfigured() || !db) return false;
+    if (!isFirebaseConfigured() || !db) {
+      console.warn('⚠️ Firebase not configured or db is null');
+      return false;
+    }
     
     try {
+      console.log('🗑️ Attempting to delete transaction from Firebase, ID:', id);
+      
+      // First, verify the document exists
+      const { getDoc } = await import('firebase/firestore');
       const transactionDoc = doc(db, 'transactions', id);
+      const docSnap = await getDoc(transactionDoc);
+      
+      if (!docSnap.exists()) {
+        console.warn('⚠️ Transaction document does not exist in Firebase, ID:', id);
+        return true; // Consider it success if already deleted
+      }
+      
+      // Delete the document
       await deleteDoc(transactionDoc);
+      console.log('✅ Transaction deleted from Firebase successfully, ID:', id);
+      
       return true;
     } catch (error) {
-      console.error('Error deleting transaction:', error);
+      console.error('❌ Error deleting transaction from Firebase:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      }
       return false;
     }
   }

@@ -154,32 +154,43 @@ export const deleteTransaction = async (id: string): Promise<boolean> => {
     try {
       console.log('📡 Attempting to delete from Firebase...');
       firebaseSuccess = await transactionService.delete(id);
+      
       if (firebaseSuccess) {
         console.log('✅ Transaction deleted from Firebase');
+        
+        // Wait a bit for Firebase to sync
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Update localStorage cache
+        const currentTransactions = await getTransactions();
+        const updatedTransactions = currentTransactions.filter(t => t.id !== id);
+        localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+        console.log('✅ LocalStorage updated, remaining transactions:', updatedTransactions.length);
+        
+        return true;
       } else {
         console.error('❌ Failed to delete from Firebase');
+        return false;
       }
     } catch (error) {
       console.error('❌ Error deleting transaction from Firebase:', error);
-      firebaseSuccess = false;
+      return false;
     }
   } else {
     console.warn('⚠️ Firebase not configured, deleting from localStorage only');
-    firebaseSuccess = true; // Consider success if no Firebase
+    
+    // Delete from localStorage only
+    try {
+      const currentTransactions = await getTransactions();
+      const updatedTransactions = currentTransactions.filter(t => t.id !== id);
+      localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+      console.log('✅ LocalStorage updated, remaining transactions:', updatedTransactions.length);
+      return true;
+    } catch (error) {
+      console.error('❌ Error updating localStorage:', error);
+      return false;
+    }
   }
-  
-  // Always update localStorage cache
-  try {
-    const currentTransactions = await getTransactions();
-    const updatedTransactions = currentTransactions.filter(t => t.id !== id);
-    localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
-    console.log('✅ LocalStorage updated, remaining transactions:', updatedTransactions.length);
-  } catch (error) {
-    console.error('❌ Error updating localStorage:', error);
-  }
-  
-  // Return true only if Firebase delete succeeded (or no Firebase configured)
-  return firebaseSuccess;
 };
 
 // Firebase Real-time Subscriptions

@@ -161,8 +161,16 @@ const App: React.FC = () => {
           menuItems={menuItems} 
           userRole={currentUser?.role || 'admin'}
           onTransactionsUpdate={async () => {
+            console.log('📡 onTransactionsUpdate callback triggered');
+            console.log('Current transactions count:', transactions.length);
+            
+            // Force reload from Firebase
             const updatedTransactions = await getTransactions();
+            console.log('Reloaded transactions count:', updatedTransactions.length);
+            
+            // Update state
             setTransactions(updatedTransactions);
+            console.log('✅ State updated with new transactions');
           }}
         />;
       case 'settings':

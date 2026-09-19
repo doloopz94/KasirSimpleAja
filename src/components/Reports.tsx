@@ -61,18 +61,26 @@ const Reports: React.FC<Props> = ({ transactions, menuItems, userRole = 'admin',
   };
 
   const handleDeleteTransaction = async (id: string) => {
+    console.log('🗑️ handleDeleteTransaction called with ID:', id);
+    
     const success = await deleteTransaction(id);
+    console.log('Delete result:', success);
+    
     if (success) {
       setShowDeleteConfirm(null);
-      // Trigger parent component to reload data
+      
+      // Force reload transactions from Firebase
       if (onTransactionsUpdate) {
-        onTransactionsUpdate();
+        console.log('📡 Calling onTransactionsUpdate callback');
+        await onTransactionsUpdate();
+        console.log('✅ Transactions updated via callback');
       } else {
-        // Fallback to reload if no callback provided
+        console.log('🔄 No callback provided, reloading page');
         window.location.reload();
       }
     } else {
-      alert('Gagal menghapus transaksi. Silakan coba lagi.');
+      console.error('❌ Delete failed for ID:', id);
+      alert('Gagal menghapus transaksi. Silakan cek console untuk detail error.');
     }
   };
 
