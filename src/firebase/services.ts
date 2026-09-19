@@ -129,10 +129,19 @@ export const transactionService = {
       const transactionCollection = collection(db, 'transactions');
       // Remove orderBy to avoid index issues - sort client-side instead
       const querySnapshot = await getDocs(transactionCollection);
-      const transactions = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Transaction[];
+      const transactions = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        // CRITICAL FIX: Use doc.id as the ID, remove 'id' field from data if exists
+        // This ensures consistency between Firebase document ID and transaction ID
+        const { id: dataId, ...restData } = data;
+        return {
+          id: doc.id, // Always use Firebase document ID
+          ...restData
+        } as Transaction;
+      });
+      
+      console.log('📊 Loaded transactions from Firebase:', transactions.length);
+      console.log('Transaction IDs:', transactions.map(t => t.id));
       
       // Sort by date descending on client-side
       return transactions.sort((a, b) => {
@@ -153,10 +162,15 @@ export const transactionService = {
     const transactionCollection = collection(db, 'transactions');
     // Remove orderBy to avoid index issues - sort client-side instead
     return onSnapshot(transactionCollection, (snapshot) => {
-      const transactions = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Transaction[];
+      const transactions = snapshot.docs.map(doc => {
+        const data = doc.data();
+        // CRITICAL FIX: Use doc.id as the ID, remove 'id' field from data if exists
+        const { id: dataId, ...restData } = data;
+        return {
+          id: doc.id, // Always use Firebase document ID
+          ...restData
+        } as Transaction;
+      });
       
       // Sort by date descending on client-side
       const sorted = transactions.sort((a, b) => {
@@ -178,16 +192,19 @@ export const transactionService = {
     
     try {
       console.log('📝 Preparing to save transaction to Firebase...');
-      console.log('Transaction data:', transaction);
       
       const transactionCollection = collection(db, 'transactions');
       
+      // CRITICAL FIX: Remove 'id' field from data before saving
+      // This prevents ID mismatch between localStorage and Firebase
+      const { id, ...transactionData } = transaction as any;
+      
       // Clean data - remove undefined values
-      const cleanData = JSON.parse(JSON.stringify(transaction));
-      console.log('Clean data to save:', cleanData);
+      const cleanData = JSON.parse(JSON.stringify(transactionData));
+      console.log('Clean data to save (id removed):', cleanData);
       
       const docRef = await addDoc(transactionCollection, cleanData);
-      console.log('✅ Transaction saved with ID:', docRef.id);
+      console.log('✅ Transaction saved with Firebase document ID:', docRef.id);
       
       return docRef.id;
     } catch (error) {
