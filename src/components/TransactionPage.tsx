@@ -34,6 +34,10 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
   const [customDeliveryFee, setCustomDeliveryFee] = useState('');
   const [useCustomDelivery, setUseCustomDelivery] = useState(false);
   
+  // Discount & payment state
+  const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [paymentAmount, setPaymentAmount] = useState<string>('');
+  
   // Popup state
   const [showItemPopup, setShowItemPopup] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
@@ -62,7 +66,11 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
   
   // Calculate actual delivery fee
   const actualDeliveryFee = useCustomDelivery ? (parseInt(customDeliveryFee) || 0) : deliveryFee;
-  const grandTotal = cartTotal + actualDeliveryFee;
+  
+  // Calculate discount
+  const discountAmount = Math.round(cartTotal * (discountPercent / 100));
+  const subtotalAfterDiscount = cartTotal - discountAmount;
+  const grandTotal = subtotalAfterDiscount + actualDeliveryFee;
 
   const openItemPopup = (item: MenuItem) => {
     setSelectedItem(item);
@@ -127,11 +135,20 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
       return;
     }
 
+    // Calculate payment amount and change for cash
+    const paymentAmountNum = parseInt(paymentAmount) || grandTotal;
+    const changeAmount = Math.max(0, paymentAmountNum - grandTotal);
+
     const transaction: Transaction = {
       id: generateId(),
       items: cart,
-      total: grandTotal,
+      subtotal: cartTotal,
+      discount: discountPercent,
+      discountAmount: discountAmount,
       deliveryFee: actualDeliveryFee,
+      total: grandTotal,
+      paymentAmount: paymentAmountNum,
+      change: changeAmount,
       customerName: customerName || 'Pelanggan',
       customerPhone,
       paymentMethod,
@@ -150,8 +167,11 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
     const transaction: Transaction = {
       id: generateId(),
       items: cart,
-      total: grandTotal,
+      subtotal: cartTotal,
+      discount: discountPercent,
+      discountAmount: discountAmount,
       deliveryFee: actualDeliveryFee,
+      total: grandTotal,
       customerName: customerName || 'Pelanggan',
       customerPhone,
       paymentMethod: 'qris',
@@ -177,6 +197,8 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
     setDeliveryFee(0);
     setCustomDeliveryFee('');
     setUseCustomDelivery(false);
+    setDiscountPercent(0);
+    setPaymentAmount('');
   };
 
   const goToCheckout = () => {
@@ -544,26 +566,103 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
             />
           </div>
 
+          {/* Discount */}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4 space-y-2 sm:space-y-3">
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2 text-sm sm:text-base">
+              <Tag size={16} className="text-pink-500" />
+              Diskon
+            </h3>
+            <div className="relative">
+              <input
+                type="number"
+                value={discountPercent}
+                onChange={(e) => setDiscountPercent(Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
+                placeholder="0"
+                className="w-full px-4 py-2.5 sm:py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent pr-10"
+                min="0"
+                max="100"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">%</span>
+            </div>
+            {discountPercent > 0 && (
+              <div className="bg-pink-50 border border-pink-200 rounded-lg p-2 text-xs sm:text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-pink-700">Diskon {discountPercent}%</span>
+                  <span className="font-semibold text-pink-700">- {formatCurrency(discountAmount)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Add More Menu Button */}
+          <button
+            onClick={() => setStep('menu')}
+            className="w-full py-2.5 sm:py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 active:scale-[0.98]"
+          >
+            <Plus size={16} />
+            Tambah Menu Lainnya
+          </button>
+
           {/* Payment Method */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4 space-y-2 sm:space-y-3">
             <h3 className="font-semibold text-gray-800 flex items-center gap-2 text-sm sm:text-base">
               <CreditCard size={16} className="text-purple-500" />
               Pilih Metode Pembayaran
             </h3>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              <button
-                onClick={() => handleSubmit('cash')}
-                className="p-3 sm:p-4 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 rounded-xl text-center transition-all group active:scale-95"
-              >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 group-hover:bg-blue-200 rounded-xl flex items-center justify-center mx-auto mb-2 transition-colors">
-                  <Banknote size={20} className="text-blue-600 sm:w-6 sm:h-6" />
+            <div className="space-y-3">
+              {/* Cash Payment */}
+              <div className="border-2 border-blue-200 rounded-xl p-3 sm:p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Banknote size={20} className="text-blue-600 sm:w-6 sm:h-6" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800 text-xs sm:text-sm">Tunai</p>
+                    <p className="text-[10px] sm:text-xs text-gray-500">Bayar langsung</p>
+                  </div>
                 </div>
-                <p className="font-semibold text-gray-800 text-xs sm:text-sm">Tunai</p>
-                <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">Bayar langsung</p>
-              </button>
+                <div className="space-y-2">
+                  <label className="block text-xs font-medium text-gray-700">
+                    Nominal Bayar (kosongkan = sesuai total)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm">Rp</span>
+                    <input
+                      type="number"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      placeholder={grandTotal.toString()}
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      min="0"
+                    />
+                  </div>
+                  {paymentAmount && parseInt(paymentAmount) >= grandTotal && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-xs sm:text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-green-700">Kembalian</span>
+                        <span className="font-semibold text-green-700">{formatCurrency(parseInt(paymentAmount) - grandTotal)}</span>
+                      </div>
+                    </div>
+                  )}
+                  {paymentAmount && parseInt(paymentAmount) < grandTotal && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-xs sm:text-sm">
+                      <p className="text-red-700">Nominal kurang {formatCurrency(grandTotal - parseInt(paymentAmount))}</p>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => handleSubmit('cash')}
+                    disabled={paymentAmount !== '' && parseInt(paymentAmount) < grandTotal}
+                    className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-colors active:scale-95"
+                  >
+                    Bayar Tunai
+                  </button>
+                </div>
+              </div>
+
+              {/* QRIS Payment */}
               <button
                 onClick={() => handleSubmit('qris')}
-                className="p-3 sm:p-4 border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 rounded-xl text-center transition-all group relative overflow-hidden active:scale-95"
+                className="w-full p-3 sm:p-4 border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 rounded-xl text-center transition-all group relative overflow-hidden active:scale-95"
               >
                 <div className="absolute top-1 right-1">
                   <span className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex items-center gap-0.5">
@@ -571,11 +670,15 @@ const TransactionPage: React.FC<Props> = ({ menuItems, transactions, onSaveTrans
                     Populer
                   </span>
                 </div>
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 group-hover:bg-purple-200 rounded-xl flex items-center justify-center mx-auto mb-2 transition-colors">
-                  <CreditCard size={20} className="text-purple-600 sm:w-6 sm:h-6" />
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 group-hover:bg-purple-200 rounded-xl flex items-center justify-center transition-colors">
+                    <CreditCard size={20} className="text-purple-600 sm:w-6 sm:h-6" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-gray-800 text-xs sm:text-sm">QRIS</p>
+                    <p className="text-[10px] sm:text-xs text-gray-500">Scan & bayar</p>
+                  </div>
                 </div>
-                <p className="font-semibold text-gray-800 text-xs sm:text-sm">QRIS</p>
-                <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">Scan & bayar</p>
               </button>
             </div>
           </div>

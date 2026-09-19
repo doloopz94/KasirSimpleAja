@@ -8,7 +8,8 @@ import {
   query, 
   orderBy,
   onSnapshot,
-  setDoc
+  setDoc,
+  getDoc
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, isFirebaseConfigured } from './config';
@@ -18,7 +19,7 @@ import { MenuItem, Transaction } from '../types';
 export const menuService = {
   // Get all menu items
   getAll: async (): Promise<MenuItem[]> => {
-    if (!isFirebaseConfigured()) return [];
+    if (!isFirebaseConfigured() || !db) return [];
     
     try {
       const menuCollection = collection(db, 'menu');
@@ -35,7 +36,7 @@ export const menuService = {
 
   // Listen to menu changes (real-time)
   subscribe: (callback: (items: MenuItem[]) => void) => {
-    if (!isFirebaseConfigured()) return () => {};
+    if (!isFirebaseConfigured() || !db) return () => {};
     
     const menuCollection = collection(db, 'menu');
     return onSnapshot(menuCollection, (snapshot) => {
@@ -49,7 +50,7 @@ export const menuService = {
 
   // Add new menu item
   add: async (item: Omit<MenuItem, 'id'>): Promise<string | null> => {
-    if (!isFirebaseConfigured()) return null;
+    if (!isFirebaseConfigured() || !db) return null;
     
     try {
       const menuCollection = collection(db, 'menu');
@@ -63,7 +64,7 @@ export const menuService = {
 
   // Update menu item
   update: async (id: string, item: Partial<MenuItem>): Promise<boolean> => {
-    if (!isFirebaseConfigured()) return false;
+    if (!isFirebaseConfigured() || !db) return false;
     
     try {
       const itemDoc = doc(db, 'menu', id);
@@ -77,7 +78,7 @@ export const menuService = {
 
   // Delete menu item
   delete: async (id: string): Promise<boolean> => {
-    if (!isFirebaseConfigured()) return false;
+    if (!isFirebaseConfigured() || !db) return false;
     
     try {
       const itemDoc = doc(db, 'menu', id);
@@ -91,7 +92,7 @@ export const menuService = {
 
   // Save all menu items (replace all)
   saveAll: async (items: MenuItem[]): Promise<boolean> => {
-    if (!isFirebaseConfigured()) return false;
+    if (!isFirebaseConfigured() || !db) return false;
     
     try {
       // Delete all existing items
@@ -122,16 +123,32 @@ export const menuService = {
 export const transactionService = {
   // Get all transactions
   getAll: async (): Promise<Transaction[]> => {
-    if (!isFirebaseConfigured()) return [];
+    if (!isFirebaseConfigured() || !db) return [];
     
     try {
       const transactionCollection = collection(db, 'transactions');
-      const q = query(transactionCollection, orderBy('date', 'desc'));
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Transaction[];
+      // Remove orderBy to avoid index issues - sort client-side instead
+      const querySnapshot = await getDocs(transactionCollection);
+      const transactions = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        // CRITICAL FIX: Use doc.id as the ID, remove 'id' field from data if exists
+        // This ensures consistency between Firebase document ID and transaction ID
+        const { id: dataId, ...restData } = data;
+        return {
+          id: doc.id, // Always use Firebase document ID
+          ...restData
+        } as Transaction;
+      });
+      
+      console.log('📊 Loaded transactions from Firebase:', transactions.length);
+      console.log('Transaction IDs:', transactions.map(t => t.id));
+      
+      // Sort by date descending on client-side
+      return transactions.sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateB - dateA; // Descending order
+      });
     } catch (error) {
       console.error('Error getting transactions:', error);
       return [];
@@ -140,37 +157,72 @@ export const transactionService = {
 
   // Listen to transaction changes (real-time)
   subscribe: (callback: (transactions: Transaction[]) => void) => {
-    if (!isFirebaseConfigured()) return () => {};
+    if (!isFirebaseConfigured() || !db) return () => {};
     
     const transactionCollection = collection(db, 'transactions');
-    const q = query(transactionCollection, orderBy('date', 'desc'));
-    
-    return onSnapshot(q, (snapshot) => {
-      const transactions = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Transaction[];
-      callback(transactions);
+    // Remove orderBy to avoid index issues - sort client-side instead
+    return onSnapshot(transactionCollection, (snapshot) => {
+      const transactions = snapshot.docs.map(doc => {
+        const data = doc.data();
+        // CRITICAL FIX: Use doc.id as the ID, remove 'id' field from data if exists
+        const { id: dataId, ...restData } = data;
+        return {
+          id: doc.id, // Always use Firebase document ID
+          ...restData
+        } as Transaction;
+      });
+      
+      // Sort by date descending on client-side
+      const sorted = transactions.sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateB - dateA; // Descending order
+      });
+      
+      callback(sorted);
     });
   },
 
   // Add new transaction
   add: async (transaction: Omit<Transaction, 'id'>): Promise<string | null> => {
-    if (!isFirebaseConfigured()) return null;
+    if (!isFirebaseConfigured() || !db) {
+      console.warn('⚠️ Firebase not configured or db is null');
+      return null;
+    }
     
     try {
+      console.log('📝 Preparing to save transaction to Firebase...');
+      
       const transactionCollection = collection(db, 'transactions');
-      const docRef = await addDoc(transactionCollection, transaction);
+      
+      // CRITICAL FIX: Remove 'id' field from data before saving
+      // This prevents ID mismatch between localStorage and Firebase
+      const { id, ...transactionData } = transaction as any;
+      
+      // Clean data - remove undefined values
+      const cleanData = JSON.parse(JSON.stringify(transactionData));
+      console.log('Clean data to save (id removed):', cleanData);
+      
+      const docRef = await addDoc(transactionCollection, cleanData);
+      console.log('✅ Transaction saved with Firebase document ID:', docRef.id);
+      
       return docRef.id;
     } catch (error) {
-      console.error('Error adding transaction:', error);
+      console.error('❌ Error adding transaction to Firebase:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      }
       return null;
     }
   },
 
   // Update transaction
   update: async (id: string, transaction: Partial<Transaction>): Promise<boolean> => {
-    if (!isFirebaseConfigured()) return false;
+    if (!isFirebaseConfigured() || !db) return false;
     
     try {
       const transactionDoc = doc(db, 'transactions', id);
@@ -180,6 +232,44 @@ export const transactionService = {
       console.error('Error updating transaction:', error);
       return false;
     }
+  },
+
+  // Delete transaction
+  delete: async (id: string): Promise<boolean> => {
+    if (!isFirebaseConfigured() || !db) {
+      console.warn('⚠️ Firebase not configured or db is null');
+      return false;
+    }
+    
+    try {
+      console.log('🗑️ Attempting to delete transaction from Firebase, ID:', id);
+      
+      // First, verify the document exists
+      const { getDoc } = await import('firebase/firestore');
+      const transactionDoc = doc(db, 'transactions', id);
+      const docSnap = await getDoc(transactionDoc);
+      
+      if (!docSnap.exists()) {
+        console.warn('⚠️ Transaction document does not exist in Firebase, ID:', id);
+        return true; // Consider it success if already deleted
+      }
+      
+      // Delete the document
+      await deleteDoc(transactionDoc);
+      console.log('✅ Transaction deleted from Firebase successfully, ID:', id);
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Error deleting transaction from Firebase:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      }
+      return false;
+    }
   }
 };
 
@@ -187,11 +277,10 @@ export const transactionService = {
 export const settingsService = {
   // Get settings
   get: async (): Promise<any> => {
-    if (!isFirebaseConfigured()) return null;
+    if (!isFirebaseConfigured() || !db) return null;
     
     try {
       const settingsDoc = doc(db, 'settings', 'app');
-      const { getDoc } = await import('firebase/firestore');
       const docSnap = await getDoc(settingsDoc);
       
       if (docSnap.exists()) {
@@ -206,7 +295,7 @@ export const settingsService = {
 
   // Save settings
   save: async (settings: any): Promise<boolean> => {
-    if (!isFirebaseConfigured()) return false;
+    if (!isFirebaseConfigured() || !db) return false;
     
     try {
       const settingsDoc = doc(db, 'settings', 'app');
@@ -223,7 +312,7 @@ export const settingsService = {
 export const logoService = {
   // Upload logo
   upload: async (file: File): Promise<string | null> => {
-    if (!isFirebaseConfigured()) return null;
+    if (!isFirebaseConfigured() || !storage) return null;
     
     try {
       const storageRef = ref(storage, `logos/${Date.now()}_${file.name}`);

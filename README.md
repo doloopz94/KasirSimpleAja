@@ -35,12 +35,26 @@ Aplikasi web modern untuk mengelola penjualan makanan rumahan dengan fitur lengk
 - Grafik pendapatan
 - Analisis kategori
 - Export CSV
+- **Edit transaksi** - Ubah data pelanggan & catatan
+- **Cetak ulang struk** - Print struk transaksi lama
+- **Hapus transaksi** - Hapus transaksi yang salah
+
+### 🖨️ Printer Thermal (Multi-Method)
+- **Bluetooth** - Koneksi langsung via Web Bluetooth API (Chrome/Edge)
+- **WiFi** - Koneksi via jaringan lokal untuk semua browser
+- **Cloud Print** - Cetak via internet untuk semua browser (fallback)
+- Support printer 58mm & 80mm
+- Auto-print struk setelah transaksi
+- Cetak ulang struk dari riwayat
+- ESC/POS protocol compatible
+- Fallback ke print dialog browser
 
 ### ⚙️ Pengaturan
 - Info toko (nama, alamat, telepon)
 - Upload logo toko
 - Konfigurasi QRIS
-- Setting printer thermal
+- **Koneksi printer thermal Bluetooth** - Scan & connect langsung
+- **Test cetak** - Verify printer bekerja
 - Kustomisasi tampilan struk
 
 ### 🔐 Sistem Login
@@ -91,6 +105,7 @@ Buka http://localhost:5173
 - **Charts:** Recharts
 - **Database:** Firebase Firestore (with localStorage fallback)
 - **Build Tool:** Vite
+- **Hardware:** Web Bluetooth API (Thermal Printer)
 
 ## 🗄️ Database
 
@@ -158,9 +173,9 @@ Edit `src/firebase/config.ts`:
 ```typescript
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  authDomain: "YOUR_AUTH_DOMAIN_HERE",
   projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
+  storageBucket: "YOUR_STORAGE_BUCKET_HERE",
   messagingSenderId: "YOUR_SENDER_ID",
   appId: "YOUR_APP_ID"
 };
@@ -236,7 +251,22 @@ npm run build
 
 ## 📝 Changelog
 
-### v1.0.0 (Current)
+### v1.3.0 (Current)
+- ✅ **WiFi Thermal Printer** - Koneksi via jaringan lokal (IP address + port)
+- ✅ **Multi-method printing** - Pilih Bluetooth, WiFi, atau Cloud Print
+- ✅ **WiFi configuration** - Input IP address dan port printer
+- ✅ **Auto-fallback** - Print dialog browser jika HTTP print gagal
+
+### v1.2.0
+- ✅ **Cloud Printing** - Alternatif cetak untuk semua browser (Safari, Firefox, iOS)
+- ✅ **Auto-detect** - Otomatis sarankan Cloud Print jika Web Bluetooth tidak tersedia
+- ✅ **Fallback print** - Print dialog browser sebagai backup
+
+### v1.1.0
+- ✅ **Printer thermal Bluetooth** - Koneksi langsung via Web Bluetooth
+- ✅ **Edit transaksi** - Ubah data pelanggan & catatan
+- ✅ **Cetak ulang struk** - Print struk dari riwayat transaksi
+- ✅ **Hapus transaksi** - Hapus transaksi yang salah
 - ✅ Dashboard & statistik
 - ✅ Kelola menu
 - ✅ Transaksi dengan QRIS
@@ -248,6 +278,9 @@ npm run build
 - ✅ Login system
 - ✅ Firebase integration
 - ✅ Responsive design
+
+### v1.0.0
+- Initial release
 
 ## 🤝 Contributing
 
@@ -261,6 +294,10 @@ MIT License - feel free to use for your business!
 
 Untuk pertanyaan atau bantuan:
 - Baca [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) untuk setup Firebase
+- Baca [THERMAL_PRINTER_GUIDE.md](./THERMAL_PRINTER_GUIDE.md) untuk setup printer thermal Bluetooth
+- Baca [WIFI_PRINTER_GUIDE.md](./WIFI_PRINTER_GUIDE.md) untuk setup printer thermal WiFi
+- Baca [CLOUD_PRINTING_GUIDE.md](./CLOUD_PRINTING_GUIDE.md) untuk cloud printing
+- Baca [NETLIFY_DEPLOY.md](./NETLIFY_DEPLOY.md) untuk deploy ke Netlify
 - Cek browser console untuk debug
 - Review dokumentasi Firebase: https://firebase.google.com/docs
 

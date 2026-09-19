@@ -2,6 +2,9 @@ import React, { useState, useRef } from 'react';
 import { Transaction } from '../types';
 import { formatCurrency, formatDate } from '../store';
 import { X, MessageCircle, Printer, FileDown, Receipt, Copy, CheckCircle, Bluetooth } from 'lucide-react';
+import { thermalPrinter } from '../services/ThermalPrinter';
+import { wifiPrinter } from '../services/WiFiPrinter';
+import { cloudPrinter } from '../services/CloudPrinter';
 
 interface Props {
   transaction: Transaction;
@@ -12,10 +15,31 @@ interface Props {
 const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
   const [copied, setCopied] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
+  const [isPrinting, setIsPrinting] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const receiptText = generateReceiptText(transaction, storeName);
   const storeLogo = localStorage.getItem('dapurku_logo') || '';
+  
+  // Get store info from settings
+  const getStoreInfo = () => {
+    const saved = localStorage.getItem('dapurku_settings');
+    if (saved) {
+      const settings = JSON.parse(saved);
+      return {
+        storeName: settings.storeName || storeName,
+        storeAddress: settings.storeAddress || '',
+        storePhone: settings.storePhone || '',
+        printerConnectionMethod: settings.printerConnectionMethod || 'bluetooth'
+      };
+    }
+    return {
+      storeName,
+      storeAddress: '',
+      storePhone: '',
+      printerConnectionMethod: 'bluetooth'
+    };
+  };
 
   const handleWhatsApp = () => {
     const phone = transaction.customerPhone?.replace(/\D/g, '');
@@ -83,60 +107,119 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
     setTimeout(() => setActiveAction(null), 2000);
   };
 
-  const handlePrintThermal = () => {
-    const printContent = receiptRef.current;
-    if (!printContent) return;
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Struk Thermal</title>
-        <style>
-          @page { 
-            size: 80mm auto; 
-            margin: 0; 
-          }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { 
-            font-family: 'Courier New', monospace; 
-            width: 80mm;
-            padding: 3mm;
-            font-size: 10px;
-            line-height: 1.3;
-          }
-          .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 3mm; margin-bottom: 3mm; }
-          .header h1 { font-size: 14px; margin-bottom: 1mm; }
-          .header p { font-size: 9px; }
-          .info { margin: 2mm 0; font-size: 9px; }
-          .info-row { display: flex; justify-content: space-between; margin: 1mm 0; }
-          .items { border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 2mm 0; margin: 2mm 0; }
-          .item { margin: 1.5mm 0; }
-          .item-name { font-weight: bold; font-size: 10px; }
-          .item-detail { display: flex; justify-content: space-between; font-size: 9px; }
-          .item-notes { font-size: 8px; font-style: italic; }
-          .total { border-top: 1px dashed #000; padding-top: 2mm; margin-top: 2mm; }
-          .total-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
-          .payment { text-align: center; margin-top: 2mm; padding: 2mm; border: 1px solid #000; }
-          .footer { text-align: center; margin-top: 3mm; font-size: 8px; border-top: 1px dashed #000; padding-top: 2mm; }
-        </style>
-      </head>
-      <body>
-        ${printContent.innerHTML}
-        <script>
-          window.onload = function() {
-            setTimeout(function() { window.print(); }, 500);
-          }
-        </script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
+  const handlePrintThermal = async () => {
+    setIsPrinting(true);
     setActiveAction('thermal');
-    setTimeout(() => setActiveAction(null), 2000);
+    
+    try {
+      const storeInfo = getStoreInfo();
+      const { storeAddress, storePhone, printerConnectionMethod } = storeInfo;
+      
+      // Try to print using the configured printer service
+      let printSuccess = false;
+      
+      if (printerConnectionMethod === 'bluetooth') {
+        // Check if Bluetooth printer is connected
+        const btState = thermalPrinter.getState();
+        if (btState.connected) {
+          await thermalPrinter.printReceipt(storeInfo.storeName, storeAddress, storePhone, transaction);
+          printSuccess = true;
+        } else {
+          throw new Error('Printer Bluetooth tidak terhubung. Silakan hubungkan terlebih dahulu di Settings.');
+        }
+      } else if (printerConnectionMethod === 'wifi') {
+        // Check if WiFi printer is connected
+        const wifiState = wifiPrinter.getState();
+        if (wifiState.connected) {
+          await wifiPrinter.printReceipt(storeInfo.storeName, storeAddress, storePhone, transaction);
+          printSuccess = true;
+        } else {
+          throw new Error('Printer WiFi tidak terhubung. Silakan hubungkan terlebih dahulu di Settings.');
+        }
+      } else if (printerConnectionMethod === 'cloud') {
+        // Check if Cloud printer is connected
+        const cloudState = cloudPrinter.getState();
+        if (cloudState.connected) {
+          await cloudPrinter.printReceipt(storeInfo.storeName, storeAddress, storePhone, transaction);
+          printSuccess = true;
+        } else {
+          throw new Error('Cloud Printer tidak terhubung. Silakan hubungkan terlebih dahulu di Settings.');
+        }
+      } else {
+        throw new Error('Metode printer tidak dikenali. Silakan cek pengaturan printer di Settings.');
+      }
+      
+      if (printSuccess) {
+        // Show success feedback
+        setTimeout(() => {
+          setActiveAction(null);
+          setIsPrinting(false);
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Thermal print error:', error);
+      
+      // Fallback: Open print dialog with thermal format
+      const printContent = receiptRef.current;
+      if (printContent) {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Struk Thermal</title>
+              <style>
+                @page { 
+                  size: 80mm auto; 
+                  margin: 0; 
+                }
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                  font-family: 'Courier New', monospace; 
+                  width: 80mm;
+                  padding: 3mm;
+                  font-size: 10px;
+                  line-height: 1.3;
+                }
+                .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 3mm; margin-bottom: 3mm; }
+                .header h1 { font-size: 14px; margin-bottom: 1mm; }
+                .header p { font-size: 9px; }
+                .info { margin: 2mm 0; font-size: 9px; }
+                .info-row { display: flex; justify-content: space-between; margin: 1mm 0; }
+                .items { border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 2mm 0; margin: 2mm 0; }
+                .item { margin: 1.5mm 0; }
+                .item-name { font-weight: bold; font-size: 10px; }
+                .item-detail { display: flex; justify-content: space-between; font-size: 9px; }
+                .item-notes { font-size: 8px; font-style: italic; }
+                .total { border-top: 1px dashed #000; padding-top: 2mm; margin-top: 2mm; }
+                .total-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
+                .payment { text-align: center; margin-top: 2mm; padding: 2mm; border: 1px solid #000; }
+                .footer { text-align: center; margin-top: 3mm; font-size: 8px; border-top: 1px dashed #000; padding-top: 2mm; }
+              </style>
+            </head>
+            <body>
+              ${printContent.innerHTML}
+              <script>
+                window.onload = function() {
+                  setTimeout(function() { window.print(); }, 500);
+                }
+              </script>
+            </body>
+            </html>
+          `);
+          printWindow.document.close();
+        }
+      }
+      
+      // Show error message
+      alert(error instanceof Error ? error.message : 'Gagal mencetak struk thermal. Silakan cek koneksi printer.');
+      
+      setTimeout(() => {
+        setActiveAction(null);
+        setIsPrinting(false);
+      }, 2000);
+    }
   };
 
   const handleCopy = () => {
@@ -173,7 +256,7 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
                   <img 
                     src={storeLogo} 
                     alt={storeName}
-                    className="w-16 h-16 mx-auto mb-2 object-contain"
+                    className="w-12 h-12 mx-auto mb-2 object-contain"
                   />
                 )}
                 <h1 className="text-lg font-bold text-gray-800">{storeName}</h1>
@@ -222,8 +305,14 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
               <div className="total border-t-2 border-dashed border-gray-400 pt-2 mt-2 space-y-1">
                 <div className="info-row flex justify-between text-[10px]">
                   <span className="text-gray-500">Subtotal</span>
-                  <span>{formatCurrency(transaction.total - (transaction.deliveryFee || 0))}</span>
+                  <span>{formatCurrency(transaction.subtotal || (transaction.total - (transaction.deliveryFee || 0)))}</span>
                 </div>
+                {(transaction.discount || 0) > 0 && (
+                  <div className="info-row flex justify-between text-[10px] text-pink-600">
+                    <span>Diskon ({transaction.discount}%)</span>
+                    <span>- {formatCurrency(transaction.discountAmount || 0)}</span>
+                  </div>
+                )}
                 {(transaction.deliveryFee || 0) > 0 && (
                   <div className="info-row flex justify-between text-[10px]">
                     <span className="text-gray-500">Ongkos Kirim</span>
@@ -234,6 +323,20 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
                   <span>TOTAL</span>
                   <span className="text-green-600">{formatCurrency(transaction.total)}</span>
                 </div>
+                {transaction.paymentMethod === 'cash' && transaction.paymentAmount && (
+                  <>
+                    <div className="info-row flex justify-between text-[10px] mt-1">
+                      <span className="text-gray-500">Dibayar</span>
+                      <span className="font-medium">{formatCurrency(transaction.paymentAmount)}</span>
+                    </div>
+                    {(transaction.change || 0) > 0 && (
+                      <div className="info-row flex justify-between text-[10px] text-blue-600">
+                        <span>Kembalian</span>
+                        <span className="font-medium">{formatCurrency(transaction.change || 0)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
                 <div className="info-row flex justify-between text-[10px] mt-1">
                   <span className="text-gray-500">Metode Bayar</span>
                   <span className="font-medium">{transaction.paymentMethod === 'qris' ? 'QRIS' : 'TUNAI'}</span>
@@ -291,18 +394,25 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
 
             <button
               onClick={handlePrintThermal}
+              disabled={isPrinting}
               className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
-                activeAction === 'thermal' 
-                  ? 'bg-purple-500 border-purple-500 text-white' 
-                  : 'border-purple-200 hover:border-purple-400 hover:bg-purple-50 text-purple-700'
+                isPrinting
+                  ? 'bg-purple-500 border-purple-500 text-white cursor-not-allowed'
+                  : activeAction === 'thermal' 
+                    ? 'bg-purple-500 border-purple-500 text-white' 
+                    : 'border-purple-200 hover:border-purple-400 hover:bg-purple-50 text-purple-700'
               }`}
             >
-              {activeAction === 'thermal' ? (
+              {isPrinting ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : activeAction === 'thermal' ? (
                 <CheckCircle size={20} />
               ) : (
-                <Bluetooth size={20} />
+                <Printer size={20} />
               )}
-              <span className="text-[10px] font-semibold">Thermal</span>
+              <span className="text-[10px] font-semibold">
+                {isPrinting ? 'Mencetak...' : 'Thermal'}
+              </span>
             </button>
           </div>
 
@@ -349,12 +459,23 @@ function generateReceiptText(transaction: Transaction, storeName: string): strin
   });
   
   text += `━━━━━━━━━━━━━━━\n`;
-  const subtotal = transaction.total - (transaction.deliveryFee || 0);
+  const subtotal = transaction.subtotal || (transaction.total - (transaction.deliveryFee || 0));
   text += `Subtotal: ${formatCurrency(subtotal)}\n`;
+  if ((transaction.discount || 0) > 0) {
+    text += `Diskon (${transaction.discount}%): -${formatCurrency(transaction.discountAmount || 0)}\n`;
+  }
   if ((transaction.deliveryFee || 0) > 0) {
     text += `Ongkir: ${formatCurrency(transaction.deliveryFee || 0)}\n`;
   }
   text += `*TOTAL: ${formatCurrency(transaction.total)}*\n`;
+  
+  if (transaction.paymentMethod === 'cash' && transaction.paymentAmount) {
+    text += `Dibayar: ${formatCurrency(transaction.paymentAmount)}\n`;
+    if ((transaction.change || 0) > 0) {
+      text += `Kembalian: ${formatCurrency(transaction.change || 0)}\n`;
+    }
+  }
+  
   text += `Bayar: ${transaction.paymentMethod === 'qris' ? 'QRIS' : 'TUNAI'}\n`;
   
   if (transaction.notes) {
