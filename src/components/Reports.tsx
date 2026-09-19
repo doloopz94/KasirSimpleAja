@@ -1,15 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { Transaction } from '../types';
-import { formatCurrency, formatDate } from '../store';
+import { Transaction, MenuItem } from '../types';
+import { formatCurrency, formatDate, deleteTransaction, updateTransaction } from '../store';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { Calendar, TrendingUp, DollarSign, ShoppingCart, FileText, Download, Edit2, Trash2, Printer, Eye, X } from 'lucide-react';
+import { Calendar, TrendingUp, DollarSign, ShoppingCart, FileText, Download, Edit2, Trash2, Printer, Eye, X, Plus, Minus } from 'lucide-react';
 import ReceiptModal from './ReceiptModal';
 
 interface Props {
   transactions: Transaction[];
+  menuItems: MenuItem[];
+  userRole?: string;
 }
 
-const Reports: React.FC<Props> = ({ transactions }) => {
+const Reports: React.FC<Props> = ({ transactions, menuItems, userRole = 'admin' }) => {
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'all'>('month');
   const [showHistory, setShowHistory] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -57,27 +59,51 @@ const Reports: React.FC<Props> = ({ transactions }) => {
     };
   };
 
-  const handleDeleteTransaction = (id: string) => {
-    const updated = transactions.filter(t => t.id !== id);
-    localStorage.setItem('dapurku_transactions', JSON.stringify(updated));
-    setShowDeleteConfirm(null);
-    window.location.reload();
+  const handleDeleteTransaction = async (id: string) => {
+    const success = await deleteTransaction(id);
+    if (success) {
+      setShowDeleteConfirm(null);
+      window.location.reload();
+    } else {
+      alert('Gagal menghapus transaksi');
+    }
   };
 
   const handleEditTransaction = (transaction: Transaction) => {
     setEditingTransaction(transaction);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingTransaction) return;
     
-    const updated = transactions.map(t => 
-      t.id === editingTransaction.id ? editingTransaction : t
-    );
-    localStorage.setItem('dapurku_transactions', JSON.stringify(updated));
-    setEditingTransaction(null);
-    window.location.reload();
+    // Recalculate totals
+    const subtotal = editingTransaction.items.reduce((sum, item) => {
+      const price = item.customPrice || item.menuItem.price;
+      return sum + (price * item.quantity);
+    }, 0);
+    
+    const discountAmount = Math.round(subtotal * ((editingTransaction.discount || 0) / 100));
+    const subtotalAfterDiscount = subtotal - discountAmount;
+    const total = subtotalAfterDiscount + (editingTransaction.deliveryFee || 0);
+    
+    const updatedTransaction = {
+      ...editingTransaction,
+      subtotal,
+      discountAmount,
+      total
+    };
+    
+    const success = await updateTransaction(editingTransaction.id, updatedTransaction);
+    if (success) {
+      setEditingTransaction(null);
+      window.location.reload();
+    } else {
+      alert('Gagal mengupdate transaksi');
+    }
   };
+
+  // Check if user can edit/delete (admin or owner only)
+  const canEditDelete = userRole === 'admin' || userRole === 'owner';
 
   // Stats
   const totalRevenue = filteredTransactions.reduce((sum, t) => sum + t.total, 0);
@@ -381,20 +407,24 @@ const Reports: React.FC<Props> = ({ transactions }) => {
                               >
                                 <Printer size={16} />
                               </button>
-                              <button
-                                onClick={() => handleEditTransaction(t)}
-                                className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                title="Edit"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                onClick={() => setShowDeleteConfirm(t.id)}
-                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                title="Hapus"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                              {canEditDelete && (
+                                <>
+                                  <button
+                                    onClick={() => handleEditTransaction(t)}
+                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                    title="Edit"
+                                  >
+                                    <Edit2 size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() => setShowDeleteConfirm(t.id)}
+                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Hapus"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -420,6 +450,83 @@ const Reports: React.FC<Props> = ({ transactions }) => {
             </div>
 
             <div className="space-y-4">
+              {/* Edit Items Section */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Item Pesanan</label>
+                <div className="space-y-2 max-h-60 overflow-y-auto border border-gray-200 rounded-xl p-3">
+                  {editingTransaction.items.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{item.menuItem.name}</p>
+                        <p className="text-xs text-gray-500">{formatCurrency(item.customPrice || item.menuItem.price)}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            const newItems = [...editingTransaction.items];
+                            if (newItems[idx].quantity > 1) {
+                              newItems[idx] = { ...newItems[idx], quantity: newItems[idx].quantity - 1 };
+                              setEditingTransaction({ ...editingTransaction, items: newItems });
+                            }
+                          }}
+                          className="w-7 h-7 flex items-center justify-center bg-white hover:bg-red-50 border border-gray-200 hover:border-red-200 rounded-lg transition-colors"
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
+                        <button
+                          onClick={() => {
+                            const newItems = [...editingTransaction.items];
+                            newItems[idx] = { ...newItems[idx], quantity: newItems[idx].quantity + 1 };
+                            setEditingTransaction({ ...editingTransaction, items: newItems });
+                          }}
+                          className="w-7 h-7 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                        >
+                          <Plus size={12} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const newItems = editingTransaction.items.filter((_, i) => i !== idx);
+                            setEditingTransaction({ ...editingTransaction, items: newItems });
+                          }}
+                          className="w-7 h-7 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-1"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Add Menu Button */}
+                  <div className="pt-2 border-t border-gray-200">
+                    <select
+                      onChange={(e) => {
+                        const menuItem = menuItems.find(m => m.id === e.target.value);
+                        if (menuItem) {
+                          const newItem = {
+                            menuItem,
+                            quantity: 1,
+                            subtotal: menuItem.price
+                          };
+                          setEditingTransaction({
+                            ...editingTransaction,
+                            items: [...editingTransaction.items, newItem]
+                          });
+                        }
+                        e.target.value = '';
+                      }}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>+ Tambah Menu</option>
+                      {menuItems.filter(m => m.available).map(m => (
+                        <option key={m.id} value={m.id}>{m.name} - {formatCurrency(m.price)}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Nama Pelanggan</label>
                 <input

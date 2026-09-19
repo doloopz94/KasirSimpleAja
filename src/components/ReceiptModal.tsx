@@ -305,8 +305,14 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
               <div className="total border-t-2 border-dashed border-gray-400 pt-2 mt-2 space-y-1">
                 <div className="info-row flex justify-between text-[10px]">
                   <span className="text-gray-500">Subtotal</span>
-                  <span>{formatCurrency(transaction.total - (transaction.deliveryFee || 0))}</span>
+                  <span>{formatCurrency(transaction.subtotal || (transaction.total - (transaction.deliveryFee || 0)))}</span>
                 </div>
+                {(transaction.discount || 0) > 0 && (
+                  <div className="info-row flex justify-between text-[10px] text-pink-600">
+                    <span>Diskon ({transaction.discount}%)</span>
+                    <span>- {formatCurrency(transaction.discountAmount || 0)}</span>
+                  </div>
+                )}
                 {(transaction.deliveryFee || 0) > 0 && (
                   <div className="info-row flex justify-between text-[10px]">
                     <span className="text-gray-500">Ongkos Kirim</span>
@@ -317,6 +323,20 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
                   <span>TOTAL</span>
                   <span className="text-green-600">{formatCurrency(transaction.total)}</span>
                 </div>
+                {transaction.paymentMethod === 'cash' && transaction.paymentAmount && (
+                  <>
+                    <div className="info-row flex justify-between text-[10px] mt-1">
+                      <span className="text-gray-500">Dibayar</span>
+                      <span className="font-medium">{formatCurrency(transaction.paymentAmount)}</span>
+                    </div>
+                    {(transaction.change || 0) > 0 && (
+                      <div className="info-row flex justify-between text-[10px] text-blue-600">
+                        <span>Kembalian</span>
+                        <span className="font-medium">{formatCurrency(transaction.change || 0)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
                 <div className="info-row flex justify-between text-[10px] mt-1">
                   <span className="text-gray-500">Metode Bayar</span>
                   <span className="font-medium">{transaction.paymentMethod === 'qris' ? 'QRIS' : 'TUNAI'}</span>
@@ -439,12 +459,23 @@ function generateReceiptText(transaction: Transaction, storeName: string): strin
   });
   
   text += `━━━━━━━━━━━━━━━\n`;
-  const subtotal = transaction.total - (transaction.deliveryFee || 0);
+  const subtotal = transaction.subtotal || (transaction.total - (transaction.deliveryFee || 0));
   text += `Subtotal: ${formatCurrency(subtotal)}\n`;
+  if ((transaction.discount || 0) > 0) {
+    text += `Diskon (${transaction.discount}%): -${formatCurrency(transaction.discountAmount || 0)}\n`;
+  }
   if ((transaction.deliveryFee || 0) > 0) {
     text += `Ongkir: ${formatCurrency(transaction.deliveryFee || 0)}\n`;
   }
   text += `*TOTAL: ${formatCurrency(transaction.total)}*\n`;
+  
+  if (transaction.paymentMethod === 'cash' && transaction.paymentAmount) {
+    text += `Dibayar: ${formatCurrency(transaction.paymentAmount)}\n`;
+    if ((transaction.change || 0) > 0) {
+      text += `Kembalian: ${formatCurrency(transaction.change || 0)}\n`;
+    }
+  }
+  
   text += `Bayar: ${transaction.paymentMethod === 'qris' ? 'QRIS' : 'TUNAI'}\n`;
   
   if (transaction.notes) {

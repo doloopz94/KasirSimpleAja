@@ -116,6 +116,58 @@ export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Prom
   return newTransaction;
 };
 
+export const updateTransaction = async (id: string, updates: Partial<Transaction>): Promise<boolean> => {
+  // Update in Firebase
+  if (isFirebaseConfigured()) {
+    try {
+      const success = await transactionService.update(id, updates);
+      if (success) {
+        // Update localStorage cache
+        const currentTransactions = await getTransactions();
+        const updatedTransactions = currentTransactions.map(t => 
+          t.id === id ? { ...t, ...updates } : t
+        );
+        localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+        return true;
+      }
+    } catch (error) {
+      console.error('Error updating transaction in Firebase:', error);
+    }
+  }
+  
+  // Fallback to localStorage only
+  const currentTransactions = await getTransactions();
+  const updatedTransactions = currentTransactions.map(t => 
+    t.id === id ? { ...t, ...updates } : t
+  );
+  localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+  return true;
+};
+
+export const deleteTransaction = async (id: string): Promise<boolean> => {
+  // Delete from Firebase
+  if (isFirebaseConfigured()) {
+    try {
+      const success = await transactionService.delete(id);
+      if (success) {
+        // Update localStorage cache
+        const currentTransactions = await getTransactions();
+        const updatedTransactions = currentTransactions.filter(t => t.id !== id);
+        localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+        return true;
+      }
+    } catch (error) {
+      console.error('Error deleting transaction from Firebase:', error);
+    }
+  }
+  
+  // Fallback to localStorage only
+  const currentTransactions = await getTransactions();
+  const updatedTransactions = currentTransactions.filter(t => t.id !== id);
+  localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+  return true;
+};
+
 // Firebase Real-time Subscriptions
 export const subscribeToMenu = (callback: (items: MenuItem[]) => void) => {
   if (!isFirebaseConfigured()) return () => {};

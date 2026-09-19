@@ -156,7 +156,7 @@ const App: React.FC = () => {
       case 'promotion':
         return <PromotionPage menuItems={menuItems} />;
       case 'reports':
-        return <Reports transactions={transactions} />;
+        return <Reports transactions={transactions} menuItems={menuItems} userRole={currentUser?.role || 'admin'} />;
       case 'settings':
         return <SettingsPage />;
       default:

@@ -215,6 +215,20 @@ export const transactionService = {
       console.error('Error updating transaction:', error);
       return false;
     }
+  },
+
+  // Delete transaction
+  delete: async (id: string): Promise<boolean> => {
+    if (!isFirebaseConfigured() || !db) return false;
+    
+    try {
+      const transactionDoc = doc(db, 'transactions', id);
+      await deleteDoc(transactionDoc);
+      return true;
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      return false;
+    }
   }
 };
 

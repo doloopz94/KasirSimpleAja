@@ -18,8 +18,13 @@ export interface TransactionItem {
 export interface Transaction {
   id: string;
   items: TransactionItem[];
-  total: number;
+  subtotal: number;
+  discount?: number;
+  discountAmount?: number;
   deliveryFee?: number;
+  total: number;
+  paymentAmount?: number;
+  change?: number;
   customerName: string;
   customerPhone: string;
   paymentMethod: 'cash' | 'qris';
