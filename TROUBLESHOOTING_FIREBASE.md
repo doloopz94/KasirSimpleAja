@@ -127,7 +127,7 @@ service cloud.firestore {
 
 ### Step 1: Buka Firebase Console
 - https://console.firebase.google.com/
-- Pilih project `dapurku-app`
+- Pilih project Anda
 
 ### Step 2: Buka Firestore Database
 - Menu kiri: **Build** → **Firestore Database**

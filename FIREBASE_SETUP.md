@@ -6,7 +6,7 @@
 
 1. Buka [Firebase Console](https://console.firebase.google.com/)
 2. Klik **"Add Project"** atau **"Buat Project"**
-3. Masukkan nama project (contoh: `dapurku-app`)
+3. Masukkan nama project (contoh: `your-project-name`)
 4. Nonaktifkan Google Analytics (opsional)
 5. Klik **"Create Project"**
 
@@ -37,12 +37,12 @@
 
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "dapurku-app.firebaseapp.com",
-  projectId: "dapurku-app",
-  storageBucket: "dapurku-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123..."
+  apiKey: "YOUR_API_KEY_HERE",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 ```
 
@@ -53,12 +53,12 @@ const firebaseConfig = {
 
 ```typescript
 const firebaseConfig = {
-  apiKey: "AIzaSy...", // Ganti dengan API key Anda
-  authDomain: "dapurku-app.firebaseapp.com",
-  projectId: "dapurku-app",
-  storageBucket: "dapurku-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123..."
+  apiKey: "YOUR_API_KEY_HERE", // Ganti dengan API key Anda
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 ```
 
@@ -145,7 +145,7 @@ firebase init hosting
 ```
 
 4. Pilih:
-   - Project: `dapurku-app`
+   - Project: `your-project-name`
    - Public directory: `dist`
    - Single-page app: `Yes`
    - GitHub deploys: `No`
@@ -160,7 +160,7 @@ npm run build
 firebase deploy
 ```
 
-7. App akan tersedia di: `https://dapurku-app.web.app`
+7. App akan tersedia di: `https://your-project-name.web.app`
 
 ---
 
