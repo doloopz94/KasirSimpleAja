@@ -38,7 +38,7 @@ git push origin main
 6. Klik **"Add variable"**
 7. Isi:
    - **Key**: `OPENROUTER_API_KEY`
-   - **Value**: `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`
+   - **Value**: `[PASTE_API_KEY_ANDA_DISINI]`
 8. Klik **"Save"**
 
 ### Step 3: Redeploy Site
