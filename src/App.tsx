@@ -156,7 +156,15 @@ const App: React.FC = () => {
       case 'promotion':
         return <PromotionPage menuItems={menuItems} />;
       case 'reports':
-        return <Reports transactions={transactions} menuItems={menuItems} userRole={currentUser?.role || 'admin'} />;
+        return <Reports 
+          transactions={transactions} 
+          menuItems={menuItems} 
+          userRole={currentUser?.role || 'admin'}
+          onTransactionsUpdate={async () => {
+            const updatedTransactions = await getTransactions();
+            setTransactions(updatedTransactions);
+          }}
+        />;
       case 'settings':
         return <SettingsPage />;
       default:

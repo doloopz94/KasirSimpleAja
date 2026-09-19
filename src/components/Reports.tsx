@@ -9,9 +9,10 @@ interface Props {
   transactions: Transaction[];
   menuItems: MenuItem[];
   userRole?: string;
+  onTransactionsUpdate?: () => void;
 }
 
-const Reports: React.FC<Props> = ({ transactions, menuItems, userRole = 'admin' }) => {
+const Reports: React.FC<Props> = ({ transactions, menuItems, userRole = 'admin', onTransactionsUpdate }) => {
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'all'>('month');
   const [showHistory, setShowHistory] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -63,9 +64,15 @@ const Reports: React.FC<Props> = ({ transactions, menuItems, userRole = 'admin' 
     const success = await deleteTransaction(id);
     if (success) {
       setShowDeleteConfirm(null);
-      window.location.reload();
+      // Trigger parent component to reload data
+      if (onTransactionsUpdate) {
+        onTransactionsUpdate();
+      } else {
+        // Fallback to reload if no callback provided
+        window.location.reload();
+      }
     } else {
-      alert('Gagal menghapus transaksi');
+      alert('Gagal menghapus transaksi. Silakan coba lagi.');
     }
   };
 
@@ -96,9 +103,15 @@ const Reports: React.FC<Props> = ({ transactions, menuItems, userRole = 'admin' 
     const success = await updateTransaction(editingTransaction.id, updatedTransaction);
     if (success) {
       setEditingTransaction(null);
-      window.location.reload();
+      // Trigger parent component to reload data
+      if (onTransactionsUpdate) {
+        onTransactionsUpdate();
+      } else {
+        // Fallback to reload if no callback provided
+        window.location.reload();
+      }
     } else {
-      alert('Gagal mengupdate transaksi');
+      alert('Gagal mengupdate transaksi. Silakan coba lagi.');
     }
   };
 

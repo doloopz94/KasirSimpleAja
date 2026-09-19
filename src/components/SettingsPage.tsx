@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X, Wifi, WifiOff, Cloud, Globe, Users } from 'lucide-react';
+import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X, Wifi, WifiOff, Cloud, Globe, Users, Bot } from 'lucide-react';
 import UserManagement from './UserManagement';
+import AIPromotionSettings from './AIPromotionSettings';
 
 const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'account' | 'users' | 'qris' | 'printer' | 'receipt'>('account');
+  const [activeTab, setActiveTab] = useState<'account' | 'users' | 'qris' | 'printer' | 'receipt' | 'ai'>('account');
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -13,6 +14,7 @@ const SettingsPage: React.FC = () => {
     { key: 'qris' as const, label: 'QRIS', icon: CreditCard },
     { key: 'printer' as const, label: 'Printer', icon: Printer },
     { key: 'receipt' as const, label: 'Nota', icon: FileText },
+    { key: 'ai' as const, label: 'AI Model', icon: Bot },
   ];
 
   const handleLogout = () => {
@@ -252,10 +254,15 @@ const SettingsPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* AI Model Settings */}
+        {activeTab === 'ai' && (
+          <AIPromotionSettings />
+        )}
       </div>
 
       {/* Save Button */}
-      {activeTab !== 'users' && (
+      {activeTab !== 'users' && activeTab !== 'ai' && (
         <button
           onClick={() => {
             setShowSaveSuccess(true);

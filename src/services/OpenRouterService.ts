@@ -11,6 +11,8 @@ export interface PromotionRequest {
   style: 'casual' | 'promo' | 'formal' | 'story' | 'facebook';
   discount?: number;
   additionalInfo?: string;
+  customModel?: string;
+  testMode?: boolean;
 }
 
 export interface PromotionResponse {

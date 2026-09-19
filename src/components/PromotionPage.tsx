@@ -208,6 +208,9 @@ const PromotionPage: React.FC<Props> = ({ menuItems }) => {
     setAiError('');
 
     try {
+      // Get saved AI model from localStorage
+      const savedModel = localStorage.getItem('ai_model') || 'inclusionai/ling-3.0-flash-vl:free';
+      
       const response = await openRouterService.generatePromotion({
         storeName,
         menuItems: selectedMenuItems.map(item => ({
@@ -217,7 +220,8 @@ const PromotionPage: React.FC<Props> = ({ menuItems }) => {
         })),
         style: selectedTemplate as any,
         discount: promoDiscount ? parseInt(promoDiscount) : undefined,
-        additionalInfo: additionalInfo || undefined
+        additionalInfo: additionalInfo || undefined,
+        customModel: savedModel
       });
 
       if (response.success && response.message) {

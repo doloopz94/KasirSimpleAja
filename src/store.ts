@@ -145,27 +145,41 @@ export const updateTransaction = async (id: string, updates: Partial<Transaction
 };
 
 export const deleteTransaction = async (id: string): Promise<boolean> => {
+  console.log('🗑️ Deleting transaction:', id);
+  
+  let firebaseSuccess = false;
+  
   // Delete from Firebase
   if (isFirebaseConfigured()) {
     try {
-      const success = await transactionService.delete(id);
-      if (success) {
-        // Update localStorage cache
-        const currentTransactions = await getTransactions();
-        const updatedTransactions = currentTransactions.filter(t => t.id !== id);
-        localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
-        return true;
+      console.log('📡 Attempting to delete from Firebase...');
+      firebaseSuccess = await transactionService.delete(id);
+      if (firebaseSuccess) {
+        console.log('✅ Transaction deleted from Firebase');
+      } else {
+        console.error('❌ Failed to delete from Firebase');
       }
     } catch (error) {
-      console.error('Error deleting transaction from Firebase:', error);
+      console.error('❌ Error deleting transaction from Firebase:', error);
+      firebaseSuccess = false;
     }
+  } else {
+    console.warn('⚠️ Firebase not configured, deleting from localStorage only');
+    firebaseSuccess = true; // Consider success if no Firebase
   }
   
-  // Fallback to localStorage only
-  const currentTransactions = await getTransactions();
-  const updatedTransactions = currentTransactions.filter(t => t.id !== id);
-  localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
-  return true;
+  // Always update localStorage cache
+  try {
+    const currentTransactions = await getTransactions();
+    const updatedTransactions = currentTransactions.filter(t => t.id !== id);
+    localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(updatedTransactions));
+    console.log('✅ LocalStorage updated, remaining transactions:', updatedTransactions.length);
+  } catch (error) {
+    console.error('❌ Error updating localStorage:', error);
+  }
+  
+  // Return true only if Firebase delete succeeded (or no Firebase configured)
+  return firebaseSuccess;
 };
 
 // Firebase Real-time Subscriptions

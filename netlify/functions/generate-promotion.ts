@@ -13,7 +13,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const { storeName, menuItems, style, discount, additionalInfo } = JSON.parse(event.body || '{}');
+    const { storeName, menuItems, style, discount, additionalInfo, customModel, testMode } = JSON.parse(event.body || '{}');
 
     // Validate required fields
     if (!storeName || !menuItems || !style) {
@@ -22,6 +22,9 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: 'Missing required fields' })
       };
     }
+
+    // Use custom model if provided, otherwise use default
+    const modelToUse = customModel || 'inclusionai/ling-3.0-flash-vl:free';
 
     // Get API key from environment variables
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -71,9 +74,14 @@ ${menuList}
 - Format dalam bahasa Indonesia
 - Jangan gunakan markdown, gunakan plain text dengan emoji`;
 
-    // Call OpenRouter API with Ling 3.0 Flash VL model
+    // Call OpenRouter API with selected model
     console.log('Calling OpenRouter API...');
-    console.log('Model: inclusionai/ling-3.0-flash-vl:free');
+    console.log('Model:', modelToUse);
+    
+    // For test mode, use shorter prompt
+    const finalPrompt = testMode 
+      ? `Buatkan pesan promosi singkat untuk "Nasi Goreng" dengan style casual. Maksimal 3 baris.`
+      : prompt;
     
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -84,7 +92,7 @@ ${menuList}
         'X-Title': 'DapurKu - Promotion Generator'
       },
       body: JSON.stringify({
-        model: 'inclusionai/ling-3.0-flash-vl:free',
+        model: modelToUse,
         messages: [
           {
             role: 'system',
@@ -92,11 +100,11 @@ ${menuList}
           },
           {
             role: 'user',
-            content: prompt
+            content: finalPrompt
           }
         ],
         temperature: 0.7,
-        max_tokens: 800
+        max_tokens: testMode ? 200 : 800
       })
     });
 
