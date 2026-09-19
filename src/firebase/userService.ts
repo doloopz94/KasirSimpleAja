@@ -1,6 +1,15 @@
-import { collection, doc, setDoc, getDocs, deleteDoc, updateDoc, query, where } from 'firebase/firestore';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  getDocs, 
+  deleteDoc, 
+  updateDoc, 
+  query, 
+  where 
+} from 'firebase/firestore';
 import { db } from './config';
-import { UserAccount } from '../types';
+import type { UserAccount } from '../types';
 
 const USERS_COLLECTION = 'users';
 
