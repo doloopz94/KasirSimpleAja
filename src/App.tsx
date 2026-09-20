@@ -103,15 +103,34 @@ const App: React.FC = () => {
           receiptShowCustomerName: true,
           receiptShowFooter: true,
           receiptFooterText: 'Terima kasih!',
+          createdAt: new Date().toISOString(),
         };
         
+        console.log('📝 Default settings to save:', defaultSettings);
+        
         // Save default settings to Firebase
-        const success = await saveSettings(defaultSettings);
-        if (success) {
-          console.log('✅ Default settings created and saved to Firebase');
-          localStorage.setItem('dapurku_settings', JSON.stringify(defaultSettings));
-        } else {
-          console.error('❌ Failed to create default settings');
+        try {
+          console.log('📤 Calling saveSettings...');
+          const success = await saveSettings(defaultSettings);
+          console.log('📥 saveSettings returned:', success);
+          
+          if (success) {
+            console.log('✅ Default settings created and saved to Firebase');
+            localStorage.setItem('dapurku_settings', JSON.stringify(defaultSettings));
+            
+            // Verify by loading again
+            console.log('🔍 Verifying settings were saved...');
+            const verifySettings = await getSettings();
+            console.log('🔍 Verification result:', verifySettings);
+          } else {
+            console.error('❌ Failed to create default settings - saveSettings returned false');
+          }
+        } catch (error) {
+          console.error('❌ Exception while creating default settings:', error);
+          console.error('❌ Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined
+          });
         }
       }
     };

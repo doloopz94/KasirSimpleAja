@@ -304,3 +304,55 @@ export const getFirebaseStatus = () => {
     mode: isFirebaseConfigured() ? 'Firebase' : 'localStorage'
   };
 };
+
+// Manual test function for debugging - can be called from browser console
+export const testSettingsSync = async () => {
+  console.log('🧪 === MANUAL SETTINGS SYNC TEST ===');
+  console.log('🔧 isFirebaseConfigured:', isFirebaseConfigured());
+  
+  if (!isFirebaseConfigured()) {
+    console.error('❌ Firebase is not configured!');
+    return;
+  }
+  
+  console.log('📥 Step 1: Loading current settings...');
+  const currentSettings = await getSettings();
+  console.log('📦 Current settings:', currentSettings);
+  
+  console.log('📝 Step 2: Creating test settings...');
+  const testSettings = {
+    storeName: 'Test Store ' + Date.now(),
+    storeTagline: 'Test Tagline',
+    storeAddress: 'Test Address',
+    storePhone: '123456789',
+    storeLogo: '',
+    printerConnection: 'bluetooth',
+    printerPaperSize: '80mm',
+    testTimestamp: new Date().toISOString(),
+  };
+  
+  console.log('📤 Step 3: Saving test settings to Firebase...');
+  const success = await saveSettings(testSettings);
+  console.log('📥 Save result:', success);
+  
+  if (success) {
+    console.log('✅ Step 4: Verifying settings were saved...');
+    const verifySettings = await getSettings();
+    console.log('🔍 Verified settings:', verifySettings);
+    
+    if (verifySettings && verifySettings.storeName === testSettings.storeName) {
+      console.log('✅✅✅ SETTINGS SYNC IS WORKING! ✅✅✅');
+    } else {
+      console.error('❌ Settings were saved but verification failed!');
+    }
+  } else {
+    console.error('❌ Failed to save settings!');
+  }
+  
+  console.log('🧪 === TEST COMPLETE ===');
+};
+
+// Export to window for console access
+if (typeof window !== 'undefined') {
+  (window as any).testSettingsSync = testSettingsSync;
+}
