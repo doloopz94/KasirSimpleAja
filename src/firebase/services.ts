@@ -330,11 +330,31 @@ export const settingsService = {
       const settingsDoc = doc(db, 'settings', 'app');
       console.log('📄 Document reference created:', settingsDoc.path);
       
-      // setDoc will create the document if it doesn't exist, or update it if it does
-      await setDoc(settingsDoc, settings, { merge: true });
-      console.log('✅ Settings saved to Firebase successfully with merge: true');
+      // Check if document exists first
+      const existingDoc = await getDoc(settingsDoc);
+      console.log('🔍 Existing document exists:', existingDoc.exists());
       
-      // Verify the document was created
+      if (existingDoc.exists()) {
+        // Document exists, use updateDoc with merge
+        console.log('📝 Updating existing document...');
+        const { updateDoc } = await import('firebase/firestore');
+        await updateDoc(settingsDoc, {
+          ...settings,
+          updatedAt: new Date().toISOString()
+        });
+        console.log('✅ Settings updated successfully');
+      } else {
+        // Document doesn't exist, create it
+        console.log('📝 Creating new document...');
+        await setDoc(settingsDoc, {
+          ...settings,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        console.log('✅ Settings created successfully');
+      }
+      
+      // Verify the document was saved
       const verifyDoc = await getDoc(settingsDoc);
       console.log('🔍 Verification - Document exists after save:', verifyDoc.exists());
       if (verifyDoc.exists()) {
