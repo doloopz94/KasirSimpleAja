@@ -1,310 +1,246 @@
-# 🍽️ DapurKu - Sistem Manajemen Penjualan Makanan Rumahan
+# 🍽️ DapurKu - Aplikasi Kasir Makanan Rumahan
 
-Aplikasi web modern untuk mengelola penjualan makanan rumahan dengan fitur lengkap termasuk transaksi, promosi, laporan, dan integrasi Firebase untuk sinkronisasi real-time.
+Aplikasi kasir modern untuk manajemen penjualan makanan rumahan dengan fitur lengkap, multi-device sync, dan support PWA.
 
 ## ✨ Fitur Utama
 
-### 📊 Dashboard
-- Ringkasan penjualan hari ini
-- Statistik pendapatan dan transaksi
-- Menu terlaris
-- Grafik penjualan
+### 💰 Transaksi & Pembayaran
+- ✅ Transaksi cepat dengan popup menu interaktif
+- ✅ Pembayaran QRIS dengan scan otomatis
+- ✅ Pembayaran tunai dengan kalkulasi kembalian
+- ✅ Diskon persentase otomatis
+- ✅ Ongkos kirim fleksibel (gratis/custom)
+- ✅ Cetak struk thermal (Bluetooth/WiFi/Cloud)
 
-### 🍽️ Kelola Menu
-- Tambah, edit, hapus menu
-- Kategori menu (Makanan Utama, Minuman, Pelengkap, dll)
-- Toggle ketersediaan menu
-- Upload gambar menu (coming soon)
+### 📊 Manajemen Data
+- ✅ Dashboard real-time dengan statistik
+- ✅ Manajemen menu dengan kategori
+- ✅ Riwayat transaksi dengan edit/hapus
+- ✅ Laporan penjualan harian/mingguan/bulanan
+- ✅ Export laporan ke CSV
 
-### 💳 Transaksi
-- Pilih menu dengan popup interaktif
-- Atur jumlah dan harga fleksibel
-- Catatan per item
-- Ongkos kirim (Gratis/Rp3.000/Rp5.000/Rp7.000/Custom)
-- Pembayaran Tunai atau QRIS
-- Cetak struk (PDF/Thermal/WhatsApp)
+### 📢 Promosi & Marketing
+- ✅ Generate pesan promosi dengan AI (OpenRouter)
+- ✅ 5 template pesan (casual, promo, formal, story, facebook)
+- ✅ Share ke WhatsApp, Facebook, atau copy text
+- ✅ Pilih model AI custom
 
-### 📢 Promosi
-- 5 template pesan promosi
-- Pilih menu yang dipromosikan
-- Share ke WhatsApp/Facebook
-- Copy text untuk broadcast
+### 🖨️ Printer Support
+- ✅ Thermal printer Bluetooth
+- ✅ Thermal printer WiFi
+- ✅ Cloud printing (fallback)
+- ✅ Status koneksi real-time
+- ✅ Test print functionality
 
-### 📈 Laporan
-- Laporan penjualan harian/mingguan/bulanan
-- Grafik pendapatan
-- Analisis kategori
-- Export CSV
-- **Edit transaksi** - Ubah data pelanggan & catatan
-- **Cetak ulang struk** - Print struk transaksi lama
-- **Hapus transaksi** - Hapus transaksi yang salah
+### 👥 Multi-User & Security
+- ✅ Login dengan PIN
+- ✅ Role-based access (Owner/Admin/Kasir)
+- ✅ Manajemen akun pengguna
+- ✅ Firebase Authentication ready
 
-### 🖨️ Printer Thermal (Multi-Method)
-- **Bluetooth** - Koneksi langsung via Web Bluetooth API (Chrome/Edge)
-- **WiFi** - Koneksi via jaringan lokal untuk semua browser
-- **Cloud Print** - Cetak via internet untuk semua browser (fallback)
-- Support printer 58mm & 80mm
-- Auto-print struk setelah transaksi
-- Cetak ulang struk dari riwayat
-- ESC/POS protocol compatible
-- Fallback ke print dialog browser
+### 📱 PWA (Progressive Web App)
+- ✅ Installable di home screen
+- ✅ Offline support
+- ✅ Auto-update service worker
+- ✅ Icon dinamis dari logo toko
+- ✅ Cross-platform (Android/iOS/Desktop)
 
-### ⚙️ Pengaturan
-- Info toko (nama, alamat, telepon)
-- Upload logo toko
-- Konfigurasi QRIS
-- **Koneksi printer thermal Bluetooth** - Scan & connect langsung
-- **Test cetak** - Verify printer bekerja
-- Kustomisasi tampilan struk
-
-### 🔐 Sistem Login
-- Login dengan PIN
-- Session management
-- Logout dengan konfirmasi
-
-### 🔄 Firebase Integration
-- Real-time sync antar device
-- Multi-user support
-- Cloud backup
-- Access dari mana saja
+### 🎨 Customization
+- ✅ Upload logo toko
+- ✅ Custom nama & tagline
+- ✅ Dynamic branding di seluruh aplikasi
+- ✅ Theme color customization
 
 ## 🚀 Quick Start
 
-### 1. Install Dependencies
+### 1. Clone & Install
 ```bash
+git clone <repository-url>
+cd dapurku
 npm install
 ```
 
-### 2. Setup Firebase (Opsional tapi Recommended)
-
-Lihat panduan lengkap di [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)
-
-**Quick Setup:**
+### 2. Setup Firebase
 1. Buat project di [Firebase Console](https://console.firebase.google.com/)
 2. Enable Firestore Database
 3. Enable Storage
 4. Copy konfigurasi Firebase
-5. Update file `src/firebase/config.ts`
+5. Lihat [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) untuk detail
 
-### 3. Jalankan Aplikasi
+### 3. Setup Environment Variables
+Tambahkan di Netlify Dashboard → Site settings → Environment variables:
+```
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+OPENROUTER_API_KEY=your_openrouter_key
+```
+
+Lihat [ENVIRONMENT_VARIABLES_SETUP.md](./ENVIRONMENT_VARIABLES_SETUP.md) untuk detail.
+
+### 4. Development
 ```bash
 npm run dev
 ```
+Buka http://localhost:3000
 
-Buka http://localhost:5173
+### 5. Build & Deploy
+```bash
+npm run build
+npm run preview  # Test production build
+```
 
-### 4. Login
-- **Username:** `admin`
-- **PIN:** `139755`
+Deploy ke Netlify:
+1. Push ke GitHub
+2. Connect repository ke Netlify
+3. Netlify akan auto-deploy
 
-## 📦 Tech Stack
+## 📖 Dokumentasi
 
-- **Frontend:** React 18 + TypeScript
+### Setup & Configuration
+- [Firebase Setup](./FIREBASE_SETUP.md) - Setup Firebase project
+- [Environment Variables](./ENVIRONMENT_VARIABLES_SETUP.md) - Setup env vars
+- [OpenRouter Setup](./OPENROUTER_SETUP.md) - Setup AI promotion
+
+### Features
+- [AI Promotion Guide](./AI_PROMOTION_GUIDE.md) - Generate promosi dengan AI
+- [Thermal Printer Guide](./THERMAL_PRINTER_GUIDE.md) - Setup thermal printer
+- [WiFi Printer Guide](./WIFI_PRINTER_GUIDE.md) - Setup WiFi printer
+- [Cloud Printing Guide](./CLOUD_PRINTING_GUIDE.md) - Setup cloud printing
+
+## 🎯 Default Login
+
+```
+Username: admin
+PIN: 139755
+```
+
+**PENTING:** Ganti PIN setelah login pertama!
+
+## 🛠️ Tech Stack
+
+- **Frontend:** React 18 + TypeScript + Vite
 - **Styling:** Tailwind CSS
-- **Icons:** Lucide React
+- **Database:** Firebase Firestore
+- **Authentication:** Firebase Auth (ready)
+- **Storage:** Firebase Storage
+- **AI:** OpenRouter API
+- **PWA:** vite-plugin-pwa
 - **Charts:** Recharts
-- **Database:** Firebase Firestore (with localStorage fallback)
-- **Build Tool:** Vite
-- **Hardware:** Web Bluetooth API (Thermal Printer)
+- **Icons:** Lucide React
 
-## 🗄️ Database
+## 📱 PWA Installation
 
-### Mode localStorage (Default)
-- Data tersimpan di browser
-- Tidak perlu setup server
-- Cocok untuk single device
-- Kapasitas ~5-10MB
+### Android (Chrome)
+1. Buka aplikasi di Chrome
+2. Klik menu (⋮) → "Install app"
+3. Konfirmasi install
+4. ✅ Aplikasi terinstall di home screen
 
-### Mode Firebase (Recommended)
-- Real-time sync antar device
-- Cloud backup otomatis
-- Multi-user support
-- Access dari mana saja
-- Free tier cukup untuk UMKM
+### iOS (Safari)
+1. Buka aplikasi di Safari
+2. Klik Share → "Add to Home Screen"
+3. Konfirmasi nama
+4. ✅ Aplikasi terinstall di home screen
 
-**Cara switch ke Firebase:**
-1. Setup Firebase project (lihat FIREBASE_SETUP.md)
-2. Update `src/firebase/config.ts` dengan credentials Anda
-3. Restart aplikasi
-4. Status akan muncul di header: "Firebase" (hijau) atau "Local" (abu-abu)
+### Desktop (Chrome/Edge)
+1. Buka aplikasi di browser
+2. Klik icon install di address bar
+3. Konfirmasi install
+4. ✅ Aplikasi terinstall di desktop
 
-## 📱 Responsive Design
+## 🔐 Security
 
-Aplikasi fully responsive untuk:
-- 📱 Smartphone (320px+)
-- 📱 Tablet (768px+)
-- 💻 Laptop (1024px+)
-- 🖥️ Desktop (1280px+)
+- ✅ Firebase API keys di environment variables
+- ✅ PIN authentication
+- ✅ Role-based access control
+- ✅ Firestore security rules
+- ✅ HTTPS only (Netlify auto)
 
-## 🎨 Fitur UI/UX
+## 📊 Database Structure
 
-- Modern & clean design
-- Smooth animations
-- Touch-friendly untuk mobile
-- Dark mode ready (coming soon)
-- Customizable branding (logo, nama toko)
+### Collections
+- `menu` - Daftar menu makanan
+- `transactions` - Riwayat transaksi
+- `users` - Data pengguna
+- `settings` - Pengaturan aplikasi
 
-## 📄 Struktur Project
-
-```
-src/
-├── components/
-│   ├── Dashboard.tsx          # Halaman dashboard
-│   ├── MenuManagement.tsx     # Kelola menu
-│   ├── TransactionPage.tsx    # Halaman transaksi
-│   ├── PromotionPage.tsx      # Halaman promosi
-│   ├── Reports.tsx            # Laporan penjualan
-│   ├── SettingsPage.tsx       # Pengaturan
-│   ├── LoginPage.tsx          # Halaman login
-│   ├── QRISPayment.tsx        # Modal pembayaran QRIS
-│   └── ReceiptModal.tsx       # Modal cetak struk
-├── firebase/
-│   ├── config.ts              # Konfigurasi Firebase
-│   └── services.ts            # Firebase services
-├── types.ts                   # TypeScript types
-├── store.ts                   # Data management
-└── App.tsx                    # Main app component
-```
-
-## 🔧 Konfigurasi
-
-### Firebase Config
-Edit `src/firebase/config.ts`:
-```typescript
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN_HERE",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_STORAGE_BUCKET_HERE",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-```
-
-### Default Login
-Edit `src/components/LoginPage.tsx`:
-```typescript
-if (username === 'admin' && pin === '139755') {
-  // Ganti dengan credentials Anda
+### Security Rules
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
 }
 ```
 
-## 📊 Firebase Pricing (Free Tier)
+**PENTING:** Update rules untuk production!
 
-**Firestore:**
-- 50K reads/hari
-- 20K writes/hari
-- 20K deletes/hari
-- 1 GB storage
+## 🎨 Customization
 
-**Storage:**
-- 5 GB storage
-- 1 GB download/hari
-- 20K upload/hari
+### Logo & Branding
+1. Buka Settings → Akun Toko
+2. Upload logo
+3. Isi nama toko & tagline
+4. Simpan pengaturan
+5. ✅ Branding update di seluruh aplikasi
 
-**Cukup untuk:**
-- ~500 transaksi/hari
-- ~1000 menu items
-- ~100 logo uploads
-
-## 🚢 Deployment
-
-### Firebase Hosting (Recommended)
-```bash
-npm install -g firebase-tools
-firebase login
-firebase init hosting
-npm run build
-firebase deploy
-```
-
-### Vercel
-```bash
-npm install -g vercel
-vercel
-```
-
-### Netlify
-```bash
-npm run build
-# Drag & drop folder 'dist' ke Netlify
-```
+### Printer Settings
+1. Buka Settings → Printer
+2. Pilih metode koneksi (Bluetooth/WiFi/Cloud)
+3. Pilih ukuran kertas (58mm/80mm)
+4. Hubungkan printer
+5. Test print
+6. ✅ Printer siap digunakan
 
 ## 🐛 Troubleshooting
 
-### Data tidak sync ke Firebase
-- Cek konfigurasi Firebase sudah benar
-- Cek Firestore Database sudah enabled
-- Cek browser console untuk error
+### PWA tidak bisa install
+- Pastikan deploy di HTTPS
+- Check manifest.webmanifest ada
+- Check service worker terdaftar
+- Clear browser cache
 
-### Logo tidak muncul
-- Cek Storage sudah enabled
-- Cek Storage rules
-- Pastikan file < 2MB
+### Printer tidak terhubung
+- Check printer menyala
+- Check koneksi Bluetooth/WiFi
+- Restart printer
+- Coba hubungkan ulang
 
-### Build error
-```bash
-rm -rf node_modules package-lock.json
-npm install
-npm run build
-```
+### Data tidak sync
+- Check koneksi internet
+- Check Firebase Console
+- Check Firestore rules
+- Reload aplikasi
 
-## 📝 Changelog
+## 📝 License
 
-### v1.3.0 (Current)
-- ✅ **WiFi Thermal Printer** - Koneksi via jaringan lokal (IP address + port)
-- ✅ **Multi-method printing** - Pilih Bluetooth, WiFi, atau Cloud Print
-- ✅ **WiFi configuration** - Input IP address dan port printer
-- ✅ **Auto-fallback** - Print dialog browser jika HTTP print gagal
-
-### v1.2.0
-- ✅ **Cloud Printing** - Alternatif cetak untuk semua browser (Safari, Firefox, iOS)
-- ✅ **Auto-detect** - Otomatis sarankan Cloud Print jika Web Bluetooth tidak tersedia
-- ✅ **Fallback print** - Print dialog browser sebagai backup
-
-### v1.1.0
-- ✅ **Printer thermal Bluetooth** - Koneksi langsung via Web Bluetooth
-- ✅ **Edit transaksi** - Ubah data pelanggan & catatan
-- ✅ **Cetak ulang struk** - Print struk dari riwayat transaksi
-- ✅ **Hapus transaksi** - Hapus transaksi yang salah
-- ✅ Dashboard & statistik
-- ✅ Kelola menu
-- ✅ Transaksi dengan QRIS
-- ✅ Cetak struk (PDF/Thermal/WA)
-- ✅ Promosi & broadcast
-- ✅ Laporan penjualan
-- ✅ Pengaturan lengkap
-- ✅ Upload logo
-- ✅ Login system
-- ✅ Firebase integration
-- ✅ Responsive design
-
-### v1.0.0
-- Initial release
+MIT License - Bebas digunakan untuk komersial
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome! Silakan buat issue atau pull request.
 
-## 📄 License
-
-MIT License - feel free to use for your business!
-
-## 💬 Support
+## 📞 Support
 
 Untuk pertanyaan atau bantuan:
-- Baca [FIREBASE_SETUP.md](./FIREBASE_SETUP.md) untuk setup Firebase
-- Baca [THERMAL_PRINTER_GUIDE.md](./THERMAL_PRINTER_GUIDE.md) untuk setup printer thermal Bluetooth
-- Baca [WIFI_PRINTER_GUIDE.md](./WIFI_PRINTER_GUIDE.md) untuk setup printer thermal WiFi
-- Baca [CLOUD_PRINTING_GUIDE.md](./CLOUD_PRINTING_GUIDE.md) untuk cloud printing
-- Baca [NETLIFY_DEPLOY.md](./NETLIFY_DEPLOY.md) untuk deploy ke Netlify
-- Cek browser console untuk debug
-- Review dokumentasi Firebase: https://firebase.google.com/docs
+- Baca dokumentasi di folder docs
+- Check Firebase Console untuk error logs
+- Check browser console (F12) untuk debugging
 
-## 🙏 Credits
+## 🎉 Credits
 
 Dibuat dengan ❤️ untuk UMKM Indonesia
 
 ---
 
-**Selamat menggunakan DapurKu! 🎉**
+**Version:** 1.7.0  
+**Last Updated:** 2024  
+**Status:** ✅ Production Ready

@@ -119,6 +119,13 @@ const App: React.FC = () => {
     await saveMenuItems(items);
   };
 
+  // Update PWA manifest when settings change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).updatePWAManifest) {
+      (window as any).updatePWAManifest();
+    }
+  }, [storeName, storeLogo]);
+
   const handleSaveTransaction = async (transaction: Transaction) => {
     // Save to Firebase and localStorage
     const savedTransaction = await addTransaction(transaction);
