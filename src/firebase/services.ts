@@ -314,64 +314,25 @@ export const settingsService = {
     }
   },
 
-  // Save settings
+  // Save settings - SIMPLE VERSION (no complex logic)
   save: async (settings: any): Promise<boolean> => {
-    console.log('🔥 settingsService.save called');
-    console.log('📝 Settings to save:', settings);
-    console.log('🔧 isFirebaseConfigured:', isFirebaseConfigured());
-    console.log('🗄️ db instance:', db ? 'exists' : 'null');
+    console.log('💾 Saving settings to Firebase...');
     
     if (!isFirebaseConfigured() || !db) {
-      console.warn('⚠️ Firebase not configured or db is null');
+      console.warn('⚠️ Firebase not configured');
       return false;
     }
     
     try {
       const settingsDoc = doc(db, 'settings', 'app');
-      console.log('📄 Document reference created:', settingsDoc.path);
       
-      // Check if document exists first
-      const existingDoc = await getDoc(settingsDoc);
-      console.log('🔍 Existing document exists:', existingDoc.exists());
+      // Simple: just use setDoc with merge
+      await setDoc(settingsDoc, settings, { merge: true });
       
-      if (existingDoc.exists()) {
-        // Document exists, use updateDoc with merge
-        console.log('📝 Updating existing document...');
-        const { updateDoc } = await import('firebase/firestore');
-        await updateDoc(settingsDoc, {
-          ...settings,
-          updatedAt: new Date().toISOString()
-        });
-        console.log('✅ Settings updated successfully');
-      } else {
-        // Document doesn't exist, create it
-        console.log('📝 Creating new document...');
-        await setDoc(settingsDoc, {
-          ...settings,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-        console.log('✅ Settings created successfully');
-      }
-      
-      // Verify the document was saved
-      const verifyDoc = await getDoc(settingsDoc);
-      console.log('🔍 Verification - Document exists after save:', verifyDoc.exists());
-      if (verifyDoc.exists()) {
-        console.log('🔍 Verification - Document data:', verifyDoc.data());
-      }
-      
+      console.log('✅ Settings saved to Firebase successfully');
       return true;
     } catch (error) {
-      console.error('❌ Error saving settings to Firebase:', error);
-      if (error instanceof Error) {
-        console.error('Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name,
-          code: (error as any).code
-        });
-      }
+      console.error('❌ Error saving settings:', error);
       return false;
     }
   },

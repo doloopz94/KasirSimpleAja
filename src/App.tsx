@@ -80,58 +80,9 @@ const App: React.FC = () => {
         if (settings.storeLogo) {
           localStorage.setItem('dapurku_logo', settings.storeLogo);
         }
-        console.log('✅ Settings cached to localStorage');
+        console.log('✅ Settings loaded from Firebase');
       } else {
-        console.warn('⚠️ No settings found in Firebase, creating default settings...');
-        
-        // Create default settings if not exist
-        const defaultSettings = {
-          storeName: 'DapurKu',
-          storeTagline: 'Makanan Rumahan Online',
-          storeAddress: '',
-          storePhone: '',
-          storeLogo: '',
-          printerConnection: 'bluetooth',
-          printerPaperSize: '80mm',
-          qrisMerchantName: '',
-          qrisMerchantId: '',
-          receiptShowLogo: true,
-          receiptShowStoreName: true,
-          receiptShowAddress: true,
-          receiptShowPhone: true,
-          receiptShowDate: true,
-          receiptShowCustomerName: true,
-          receiptShowFooter: true,
-          receiptFooterText: 'Terima kasih!',
-          createdAt: new Date().toISOString(),
-        };
-        
-        console.log('📝 Default settings to save:', defaultSettings);
-        
-        // Save default settings to Firebase
-        try {
-          console.log('📤 Calling saveSettings...');
-          const success = await saveSettings(defaultSettings);
-          console.log('📥 saveSettings returned:', success);
-          
-          if (success) {
-            console.log('✅ Default settings created and saved to Firebase');
-            localStorage.setItem('dapurku_settings', JSON.stringify(defaultSettings));
-            
-            // Verify by loading again
-            console.log('🔍 Verifying settings were saved...');
-            const verifySettings = await getSettings();
-            console.log('🔍 Verification result:', verifySettings);
-          } else {
-            console.error('❌ Failed to create default settings - saveSettings returned false');
-          }
-        } catch (error) {
-          console.error('❌ Exception while creating default settings:', error);
-          console.error('❌ Error details:', {
-            message: error instanceof Error ? error.message : 'Unknown error',
-            stack: error instanceof Error ? error.stack : undefined
-          });
-        }
+        console.log('ℹ️ No settings in Firebase yet - will be created when user saves settings');
       }
     };
     
@@ -152,13 +103,12 @@ const App: React.FC = () => {
       });
       
       const unsubscribeSettings = subscribeToSettings((settings) => {
-        // Update localStorage cache
+        // Update localStorage cache ONLY - NO RELOAD!
         localStorage.setItem('dapurku_settings', JSON.stringify(settings));
         if (settings.storeLogo) {
           localStorage.setItem('dapurku_logo', settings.storeLogo);
         }
-        // Force re-render by updating state
-        window.location.reload();
+        console.log('✅ Settings updated from Firebase subscription (no reload)');
       });
       
       // Cleanup subscriptions on unmount
