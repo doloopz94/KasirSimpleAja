@@ -1,325 +1,8 @@
 @import "tailwindcss";
 
 /* ============================================
-   RESPONSIVE LAYOUT - COMPLETE VERSION
+   MINIMAL CUSTOM CSS - Let Tailwind Handle Most
    ============================================ */
-
-/* Desktop (> 1024px) - Normal sidebar */
-@media (min-width: 1025px) {
-  aside {
-    width: 16rem !important;
-    display: block !important;
-  }
-  
-  main {
-    margin-left: 16rem !important;
-  }
-  
-  nav.fixed.bottom-0 {
-    display: none !important;
-  }
-}
-
-/* Tablet (768px - 1024px) - Compact sidebar */
-@media (min-width: 768px) and (max-width: 1024px) {
-  aside {
-    width: 12rem !important;
-    display: block !important;
-  }
-  
-  main {
-    margin-left: 12rem !important;
-  }
-  
-  nav.fixed.bottom-0 {
-    display: none !important;
-  }
-  
-  /* Compact sidebar content */
-  aside .p-5 {
-    padding: 0.75rem !important;
-  }
-  
-  aside .p-3 {
-    padding: 0.5rem !important;
-  }
-  
-  aside button {
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.875rem !important;
-  }
-  
-  aside h1 {
-    font-size: 1rem !important;
-  }
-  
-  aside p {
-    font-size: 0.75rem !important;
-  }
-  
-  aside .w-10 {
-    width: 2rem !important;
-    height: 2rem !important;
-  }
-}
-
-/* Mobile (< 768px) - Hide sidebar, use bottom nav */
-@media (max-width: 767px) {
-  aside {
-    display: none !important;
-  }
-  
-  main {
-    margin-left: 0 !important;
-    width: 100% !important;
-  }
-  
-  nav.fixed.bottom-0 {
-    display: flex !important;
-  }
-  
-  /* Compact content */
-  .p-4.lg\:p-6 {
-    padding: 0.75rem !important;
-  }
-  
-  header {
-    padding: 0.5rem 1rem !important;
-  }
-}
-
-/* ============================================
-   LANDSCAPE OVERRIDES
-   ============================================ */
-
-/* Landscape mobile - hide sidebar */
-@media (orientation: landscape) and (max-width: 1024px) {
-  aside {
-    display: none !important;
-  }
-  
-  main {
-    margin-left: 0 !important;
-    width: 100% !important;
-  }
-  
-  nav.fixed.bottom-0 {
-    display: flex !important;
-  }
-  
-  header {
-    padding: 0.5rem 1rem !important;
-  }
-  
-  .p-4.lg\:p-6 {
-    padding: 0.5rem !important;
-  }
-}
-
-/* Landscape tablet - compact sidebar */
-@media (orientation: landscape) and (min-width: 1025px) {
-  aside {
-    width: 12rem !important;
-  }
-  
-  main {
-    margin-left: 12rem !important;
-  }
-  
-  aside .p-5 {
-    padding: 0.75rem !important;
-  }
-  
-  aside .p-3 {
-    padding: 0.5rem !important;
-  }
-  
-  aside button {
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.875rem !important;
-  }
-}
-
-/* ============================================
-   GENERAL OPTIMIZATIONS
-   ============================================ */
-
-/* Landscape mode - general optimizations */
-@media (orientation: landscape) {
-  /* Reduce spacing */
-  .space-y-6 {
-    gap: 1rem;
-  }
-  
-  .space-y-4 {
-    gap: 0.75rem;
-  }
-  
-  /* Compact header */
-  header {
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-  }
-  
-  /* Compact cards */
-  .rounded-xl {
-    border-radius: 0.5rem;
-  }
-  
-  /* Compact buttons */
-  button {
-    min-height: 2.5rem;
-  }
-  
-  /* Compact tables */
-  table {
-    font-size: 0.875rem;
-  }
-  
-  th, td {
-    padding: 0.5rem 0.75rem;
-  }
-  
-  /* Compact forms */
-  input, select, textarea {
-    padding: 0.5rem 0.75rem;
-  }
-  
-  /* Compact modals */
-  .fixed.inset-0 {
-    padding: 1rem;
-  }
-  
-  /* Compact bottom nav */
-  nav.fixed.bottom-0 {
-    padding: 0.25rem 0;
-  }
-  
-  nav.fixed.bottom-0 button {
-    padding: 0.25rem 0.5rem;
-  }
-}
-
-/* ============================================
-   PORTRAIT MODE - FULL LAYOUT
-   ============================================ */
-
-@media (orientation: portrait) {
-  /* Normal spacing */
-  .space-y-6 {
-    gap: 1.5rem;
-  }
-  
-  .space-y-4 {
-    gap: 1rem;
-  }
-  
-  /* Normal padding */
-  .p-4 {
-    padding: 1rem;
-  }
-  
-  .p-5 {
-    padding: 1.25rem;
-  }
-  
-  .p-6 {
-    padding: 1.5rem;
-  }
-}
-
-/* ============================================
-   PWA & ACCESSIBILITY
-   ============================================ */
-
-/* PWA standalone mode */
-@media all and (display-mode: standalone) {
-  body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  
-  header {
-    padding-top: calc(0.5rem + env(safe-area-inset-top));
-  }
-  
-  nav.fixed.bottom-0 {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
-
-/* Touch devices */
-@media (hover: none) and (pointer: coarse) {
-  button, a, input, select, textarea {
-    min-height: 44px;
-    min-width: 44px;
-  }
-}
-
-/* Small screens */
-@media (max-width: 640px) {
-  html {
-    font-size: 14px;
-  }
-  
-  .p-4 {
-    padding: 0.75rem;
-  }
-  
-  .p-5 {
-    padding: 1rem;
-  }
-  
-  .gap-4 {
-    gap: 0.75rem;
-  }
-  
-  .gap-6 {
-    gap: 1rem;
-  }
-}
-
-/* Large screens */
-@media (min-width: 1280px) {
-  .max-w-7xl {
-    max-width: 80rem;
-  }
-  
-  .grid-cols-4 {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-/* Print styles */
-@media print {
-  nav, aside, header, button {
-    display: none !important;
-  }
-  
-  body {
-    font-size: 12pt;
-    line-height: 1.5;
-  }
-  
-  h1, h2, h3 {
-    page-break-after: avoid;
-  }
-  
-  table, figure {
-    page-break-inside: avoid;
-  }
-}
-
-/* ============================================
-   ANIMATIONS & TRANSITIONS
-   ============================================ */
-
-/* Smooth transitions */
-* {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
@@ -341,7 +24,7 @@
   background: #555;
 }
 
-/* Focus styles */
+/* Focus styles for accessibility */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -351,7 +34,7 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* Loading animation */
+/* Animations */
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -362,7 +45,6 @@ textarea:focus-visible {
   animation: spin 1s linear infinite;
 }
 
-/* Fade in animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -378,7 +60,6 @@ textarea:focus-visible {
   animation: fadeIn 0.3s ease-out;
 }
 
-/* Slide up animation */
 @keyframes slideUp {
   from {
     transform: translateY(100%);
@@ -392,7 +73,6 @@ textarea:focus-visible {
   animation: slideUp 0.3s ease-out;
 }
 
-/* Pulse animation */
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -406,11 +86,7 @@ textarea:focus-visible {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* ============================================
-   UTILITY CLASSES
-   ============================================ */
-
-/* Hide scrollbar but keep functionality */
+/* Hide scrollbar utility */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -420,7 +96,7 @@ textarea:focus-visible {
   display: none;
 }
 
-/* Line clamp */
+/* Line clamp utility */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -428,7 +104,19 @@ textarea:focus-visible {
   overflow: hidden;
 }
 
-/* Safe area padding */
+/* Safe area padding for PWA */
 .pb-safe {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+/* Print styles */
+@media print {
+  nav, aside, header, button {
+    display: none !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
 }
