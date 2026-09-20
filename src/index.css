@@ -189,6 +189,25 @@
   table {
     min-width: 600px;
   }
+  
+  /* Add padding bottom for bottom nav in landscape mobile */
+  main > div {
+    padding-bottom: 5rem !important;
+  }
+}
+
+/* Mobile portrait - ensure content not hidden by bottom nav */
+@media (max-width: 1023px) and (orientation: portrait) {
+  main > div {
+    padding-bottom: 5rem !important;
+  }
+}
+
+/* Tablet landscape - ensure content not hidden by bottom nav */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  main > div {
+    padding-bottom: 5rem !important;
+  }
 }
 
 /* PWA specific styles */

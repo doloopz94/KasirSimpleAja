@@ -65,6 +65,15 @@ const App: React.FC = () => {
       
       const trans = await getTransactions();
       setTransactions(trans);
+      
+      // Load settings from Firebase
+      const settings = await getSettings();
+      if (settings) {
+        localStorage.setItem('dapurku_settings', JSON.stringify(settings));
+        if (settings.storeLogo) {
+          localStorage.setItem('dapurku_logo', settings.storeLogo);
+        }
+      }
     };
     
     loadData();
@@ -220,9 +229,9 @@ const App: React.FC = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 shadow-sm transform transition-transform duration-300 ${
+      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 shadow-sm transform transition-transform duration-300 overflow-y-auto ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      }`}>
+      }`} style={{ paddingBottom: '4rem' }}>
         <div className="p-5 border-b border-gray-100">
           <div className="flex items-center gap-3">
             {storeLogo ? (
@@ -273,7 +282,7 @@ const App: React.FC = () => {
         </nav>
 
         {/* Logout Button in Sidebar */}
-        <div className="absolute bottom-16 lg:bottom-0 left-0 right-0 p-3 border-t border-gray-100">
+        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-100 bg-white">
           <button
             onClick={() => setShowLogoutConfirm(true)}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all text-red-600 hover:bg-red-50"
@@ -281,13 +290,6 @@ const App: React.FC = () => {
             <LogOut size={20} />
             <span className="text-sm font-medium">Logout</span>
           </button>
-        </div>
-
-        <div className="absolute bottom-16 lg:bottom-16 left-0 right-0 p-4">
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3">
-            <p className="text-xs text-green-700 font-medium">💡 Tips</p>
-            <p className="text-xs text-green-600 mt-1">Gunakan QRIS untuk pembayaran lebih cepat dan aman!</p>
-          </div>
         </div>
       </aside>
 
@@ -345,7 +347,7 @@ const App: React.FC = () => {
         </header>
 
         {/* Page Content */}
-        <div className="p-4 lg:p-6">
+        <div className="p-4 lg:p-6 pb-20 lg:pb-6">
           {renderPage()}
         </div>
       </main>
