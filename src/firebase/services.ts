@@ -330,8 +330,17 @@ export const settingsService = {
       const settingsDoc = doc(db, 'settings', 'app');
       console.log('📄 Document reference created:', settingsDoc.path);
       
-      await setDoc(settingsDoc, settings);
-      console.log('✅ Settings saved to Firebase successfully');
+      // setDoc will create the document if it doesn't exist, or update it if it does
+      await setDoc(settingsDoc, settings, { merge: true });
+      console.log('✅ Settings saved to Firebase successfully with merge: true');
+      
+      // Verify the document was created
+      const verifyDoc = await getDoc(settingsDoc);
+      console.log('🔍 Verification - Document exists after save:', verifyDoc.exists());
+      if (verifyDoc.exists()) {
+        console.log('🔍 Verification - Document data:', verifyDoc.data());
+      }
+      
       return true;
     } catch (error) {
       console.error('❌ Error saving settings to Firebase:', error);
@@ -339,7 +348,8 @@ export const settingsService = {
         console.error('Error details:', {
           message: error.message,
           stack: error.stack,
-          name: error.name
+          name: error.name,
+          code: (error as any).code
         });
       }
       return false;
