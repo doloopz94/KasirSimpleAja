@@ -82,7 +82,37 @@ const App: React.FC = () => {
         }
         console.log('✅ Settings cached to localStorage');
       } else {
-        console.warn('⚠️ No settings found in Firebase');
+        console.warn('⚠️ No settings found in Firebase, creating default settings...');
+        
+        // Create default settings if not exist
+        const defaultSettings = {
+          storeName: 'DapurKu',
+          storeTagline: 'Makanan Rumahan Online',
+          storeAddress: '',
+          storePhone: '',
+          storeLogo: '',
+          printerConnection: 'bluetooth',
+          printerPaperSize: '80mm',
+          qrisMerchantName: '',
+          qrisMerchantId: '',
+          receiptShowLogo: true,
+          receiptShowStoreName: true,
+          receiptShowAddress: true,
+          receiptShowPhone: true,
+          receiptShowDate: true,
+          receiptShowCustomerName: true,
+          receiptShowFooter: true,
+          receiptFooterText: 'Terima kasih!',
+        };
+        
+        // Save default settings to Firebase
+        const success = await saveSettings(defaultSettings);
+        if (success) {
+          console.log('✅ Default settings created and saved to Firebase');
+          localStorage.setItem('dapurku_settings', JSON.stringify(defaultSettings));
+        } else {
+          console.error('❌ Failed to create default settings');
+        }
       }
     };
     
@@ -239,7 +269,7 @@ const App: React.FC = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:sticky lg:top-0 inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 shadow-sm transform transition-all duration-300 overflow-y-auto flex-shrink-0 ${
+      <aside className={`sidebar fixed lg:sticky lg:top-0 inset-y-0 left-0 z-40 bg-white border-r border-gray-100 shadow-sm transform transition-all duration-300 overflow-y-auto flex-shrink-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`} style={{ paddingBottom: '4rem', height: '100vh' }}>
         <div className="p-5 border-b border-gray-100">
