@@ -229,7 +229,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -239,9 +239,9 @@ const App: React.FC = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 shadow-sm transform transition-transform duration-300 overflow-y-auto ${
+      <aside className={`fixed lg:sticky lg:top-0 inset-y-0 left-0 z-40 w-64 lg:w-64 bg-white border-r border-gray-100 shadow-sm transform transition-transform duration-300 overflow-y-auto flex-shrink-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      }`} style={{ paddingBottom: '4rem' }}>
+      }`} style={{ paddingBottom: '4rem', height: '100vh' }}>
         <div className="p-5 border-b border-gray-100">
           <div className="flex items-center gap-3">
             {storeLogo ? (

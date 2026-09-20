@@ -196,6 +196,61 @@
   }
 }
 
+/* Landscape mobile - sidebar optimization */
+@media (orientation: landscape) and (max-width: 1023px) {
+  /* Sidebar should not overlap content */
+  aside {
+    width: 14rem !important;
+  }
+  
+  /* When sidebar is open in landscape mobile, add margin to main content */
+  aside.translate-x-0 ~ main {
+    margin-left: 14rem;
+  }
+  
+  /* Sidebar logout button positioning */
+  aside > div.absolute {
+    position: sticky !important;
+    bottom: 0;
+    background: white;
+  }
+  
+  /* Reduce sidebar padding in landscape */
+  aside .p-5 {
+    padding: 0.75rem !important;
+  }
+  
+  aside .p-3 {
+    padding: 0.5rem !important;
+  }
+  
+  /* Sidebar nav buttons */
+  aside button {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  /* Sidebar header */
+  aside .p-5 h1 {
+    font-size: 1rem !important;
+  }
+  
+  aside .p-5 p {
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Landscape tablet - sidebar optimization */
+@media (orientation: landscape) and (min-width: 768px) and (max-width: 1024px) {
+  aside {
+    width: 16rem !important;
+  }
+  
+  aside.translate-x-0 ~ main {
+    margin-left: 16rem;
+  }
+}
+
 /* Mobile portrait - ensure content not hidden by bottom nav */
 @media (max-width: 1023px) and (orientation: portrait) {
   main > div {
