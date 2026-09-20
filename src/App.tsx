@@ -60,19 +60,29 @@ const App: React.FC = () => {
     
     // Load initial data - async load from Firebase/localStorage
     const loadData = async () => {
+      console.log('🚀 Loading initial data...');
+      
       const menu = await getMenuItems();
       setMenuItems(menu);
+      console.log('✅ Menu loaded:', menu.length, 'items');
       
       const trans = await getTransactions();
       setTransactions(trans);
+      console.log('✅ Transactions loaded:', trans.length, 'items');
       
       // Load settings from Firebase
+      console.log('📥 Loading settings from Firebase...');
       const settings = await getSettings();
+      console.log('📦 Settings loaded:', settings);
+      
       if (settings) {
         localStorage.setItem('dapurku_settings', JSON.stringify(settings));
         if (settings.storeLogo) {
           localStorage.setItem('dapurku_logo', settings.storeLogo);
         }
+        console.log('✅ Settings cached to localStorage');
+      } else {
+        console.warn('⚠️ No settings found in Firebase');
       }
     };
     

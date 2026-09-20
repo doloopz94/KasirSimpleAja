@@ -196,38 +196,63 @@ export const deleteTransaction = async (id: string): Promise<boolean> => {
 
 // Settings
 export const getSettings = async (): Promise<any> => {
+  console.log('📥 getSettings called');
+  console.log('🔧 isFirebaseConfigured:', isFirebaseConfigured());
+  
   // Try Firebase first
   if (isFirebaseConfigured()) {
+    console.log('🔥 Firebase is configured, fetching from Firebase...');
     try {
       const firebaseSettings = await settingsService.get();
+      console.log('📦 Firebase settings:', firebaseSettings);
+      
       if (firebaseSettings) {
         // Cache to localStorage
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(firebaseSettings));
+        console.log('✅ Settings cached to localStorage');
         return firebaseSettings;
+      } else {
+        console.warn('⚠️ No settings found in Firebase');
       }
     } catch (error) {
-      console.error('Error fetching settings from Firebase:', error);
+      console.error('❌ Error fetching settings from Firebase:', error);
     }
+  } else {
+    console.warn('⚠️ Firebase is NOT configured');
   }
   
   // Fallback to localStorage
   const data = localStorage.getItem(SETTINGS_KEY);
-  if (data) return JSON.parse(data);
+  if (data) {
+    console.log('✅ Settings loaded from localStorage fallback');
+    return JSON.parse(data);
+  }
+  
+  console.warn('⚠️ No settings found anywhere');
   return null;
 };
 
 export const saveSettings = async (settings: any): Promise<boolean> => {
+  console.log('💾 saveSettings called from store.ts');
+  console.log('📦 Settings object:', settings);
+  
   // Save to localStorage first (for immediate UI update)
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  console.log('✅ Settings saved to localStorage');
   
   // Save to Firebase
   if (isFirebaseConfigured()) {
+    console.log('🔥 Firebase is configured, calling settingsService.save...');
     try {
-      return await settingsService.save(settings);
+      const result = await settingsService.save(settings);
+      console.log('📊 settingsService.save result:', result);
+      return result;
     } catch (error) {
-      console.error('Error saving settings to Firebase:', error);
+      console.error('❌ Error saving settings to Firebase:', error);
       return false;
     }
+  } else {
+    console.warn('⚠️ Firebase is NOT configured, only saving to localStorage');
   }
   
   return true;

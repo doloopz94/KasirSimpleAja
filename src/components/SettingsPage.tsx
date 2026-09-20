@@ -82,21 +82,29 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleSaveSettings = async () => {
+    console.log('🖱️ handleSaveSettings clicked');
+    console.log('📋 Current storeSettings:', storeSettings);
+    
     try {
       // Save to Firebase and localStorage
+      console.log('📤 Calling saveSettings...');
       const success = await saveSettings(storeSettings);
+      console.log('📥 saveSettings returned:', success);
       
       if (success) {
         // Also save logo separately for quick access
         localStorage.setItem('dapurku_logo', storeSettings.storeLogo);
+        console.log('✅ Logo saved to localStorage separately');
         
         setShowSaveSuccess(true);
         setTimeout(() => setShowSaveSuccess(false), 2000);
+        console.log('✅ Settings saved successfully!');
       } else {
+        console.error('❌ saveSettings returned false');
         alert('Gagal menyimpan pengaturan. Silakan coba lagi.');
       }
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error('❌ Error in handleSaveSettings:', error);
       alert('Gagal menyimpan pengaturan. Silakan coba lagi.');
     }
   };

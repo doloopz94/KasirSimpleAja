@@ -277,32 +277,71 @@ export const transactionService = {
 export const settingsService = {
   // Get settings
   get: async (): Promise<any> => {
-    if (!isFirebaseConfigured() || !db) return null;
+    console.log('📥 settingsService.get called');
+    console.log('🔧 isFirebaseConfigured:', isFirebaseConfigured());
+    console.log('🗄️ db instance:', db ? 'exists' : 'null');
+    
+    if (!isFirebaseConfigured() || !db) {
+      console.warn('⚠️ Firebase not configured or db is null');
+      return null;
+    }
     
     try {
       const settingsDoc = doc(db, 'settings', 'app');
+      console.log('📄 Fetching document:', settingsDoc.path);
+      
       const docSnap = await getDoc(settingsDoc);
+      console.log('📸 Document exists:', docSnap.exists());
       
       if (docSnap.exists()) {
-        return docSnap.data();
+        const data = docSnap.data();
+        console.log('✅ Settings retrieved from Firebase:', data);
+        return data;
       }
+      
+      console.warn('⚠️ Settings document does not exist in Firebase');
       return null;
     } catch (error) {
-      console.error('Error getting settings:', error);
+      console.error('❌ Error getting settings from Firebase:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      }
       return null;
     }
   },
 
   // Save settings
   save: async (settings: any): Promise<boolean> => {
-    if (!isFirebaseConfigured() || !db) return false;
+    console.log('🔥 settingsService.save called');
+    console.log('📝 Settings to save:', settings);
+    console.log('🔧 isFirebaseConfigured:', isFirebaseConfigured());
+    console.log('🗄️ db instance:', db ? 'exists' : 'null');
+    
+    if (!isFirebaseConfigured() || !db) {
+      console.warn('⚠️ Firebase not configured or db is null');
+      return false;
+    }
     
     try {
       const settingsDoc = doc(db, 'settings', 'app');
+      console.log('📄 Document reference created:', settingsDoc.path);
+      
       await setDoc(settingsDoc, settings);
+      console.log('✅ Settings saved to Firebase successfully');
       return true;
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error('❌ Error saving settings to Firebase:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      }
       return false;
     }
   },
