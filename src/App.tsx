@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Page, MenuItem, Transaction } from './types';
-import { getMenuItems, saveMenuItems, getTransactions, addTransaction, subscribeToMenu, subscribeToTransactions, getFirebaseStatus } from './store';
+import { getMenuItems, saveMenuItems, getTransactions, addTransaction, subscribeToMenu, subscribeToTransactions, getFirebaseStatus, getSettings, saveSettings, subscribeToSettings } from './store';
 import { isFirebaseConfigured } from './firebase/config';
 import Dashboard from './components/Dashboard';
 import MenuManagement from './components/MenuManagement';
@@ -9,6 +9,7 @@ import Reports from './components/Reports';
 import SettingsPage from './components/SettingsPage';
 import LoginPage from './components/LoginPage';
 import PromotionPage from './components/PromotionPage';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { LayoutDashboard, UtensilsCrossed, ShoppingCart, BarChart3, ChefHat, Settings, LogOut, Megaphone, Wifi, WifiOff } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -82,10 +83,21 @@ const App: React.FC = () => {
         setTransactions(transactions);
       });
       
+      const unsubscribeSettings = subscribeToSettings((settings) => {
+        // Update localStorage cache
+        localStorage.setItem('dapurku_settings', JSON.stringify(settings));
+        if (settings.storeLogo) {
+          localStorage.setItem('dapurku_logo', settings.storeLogo);
+        }
+        // Force re-render by updating state
+        window.location.reload();
+      });
+      
       // Cleanup subscriptions on unmount
       return () => {
         unsubscribeMenu();
         unsubscribeTransactions();
+        unsubscribeSettings();
       };
     }
   }, []);
@@ -391,6 +403,9 @@ const App: React.FC = () => {
           </div>
         </>
       )}
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 };

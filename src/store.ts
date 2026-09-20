@@ -1,9 +1,10 @@
 import { MenuItem, Transaction } from './types';
 import { isFirebaseConfigured } from './firebase/config';
-import { menuService, transactionService } from './firebase/services';
+import { menuService, transactionService, settingsService } from './firebase/services';
 
 const MENU_KEY = 'dapurku_menu';
 const TRANSACTIONS_KEY = 'dapurku_transactions';
+const SETTINGS_KEY = 'dapurku_settings';
 
 // Default menu items
 const defaultMenu: MenuItem[] = [
@@ -193,6 +194,45 @@ export const deleteTransaction = async (id: string): Promise<boolean> => {
   }
 };
 
+// Settings
+export const getSettings = async (): Promise<any> => {
+  // Try Firebase first
+  if (isFirebaseConfigured()) {
+    try {
+      const firebaseSettings = await settingsService.get();
+      if (firebaseSettings) {
+        // Cache to localStorage
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(firebaseSettings));
+        return firebaseSettings;
+      }
+    } catch (error) {
+      console.error('Error fetching settings from Firebase:', error);
+    }
+  }
+  
+  // Fallback to localStorage
+  const data = localStorage.getItem(SETTINGS_KEY);
+  if (data) return JSON.parse(data);
+  return null;
+};
+
+export const saveSettings = async (settings: any): Promise<boolean> => {
+  // Save to localStorage first (for immediate UI update)
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  
+  // Save to Firebase
+  if (isFirebaseConfigured()) {
+    try {
+      return await settingsService.save(settings);
+    } catch (error) {
+      console.error('Error saving settings to Firebase:', error);
+      return false;
+    }
+  }
+  
+  return true;
+};
+
 // Firebase Real-time Subscriptions
 export const subscribeToMenu = (callback: (items: MenuItem[]) => void) => {
   if (!isFirebaseConfigured()) return () => {};
@@ -202,6 +242,11 @@ export const subscribeToMenu = (callback: (items: MenuItem[]) => void) => {
 export const subscribeToTransactions = (callback: (transactions: Transaction[]) => void) => {
   if (!isFirebaseConfigured()) return () => {};
   return transactionService.subscribe(callback);
+};
+
+export const subscribeToSettings = (callback: (settings: any) => void) => {
+  if (!isFirebaseConfigured()) return () => {};
+  return settingsService.subscribe(callback);
 };
 
 // Utility functions

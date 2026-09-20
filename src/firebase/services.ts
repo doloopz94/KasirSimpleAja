@@ -305,6 +305,18 @@ export const settingsService = {
       console.error('Error saving settings:', error);
       return false;
     }
+  },
+
+  // Subscribe to settings changes (real-time)
+  subscribe: (callback: (settings: any) => void) => {
+    if (!isFirebaseConfigured() || !db) return () => {};
+    
+    const settingsDoc = doc(db, 'settings', 'app');
+    return onSnapshot(settingsDoc, (snapshot) => {
+      if (snapshot.exists()) {
+        callback(snapshot.data());
+      }
+    });
   }
 };
 

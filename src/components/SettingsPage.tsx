@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X, Wifi, WifiOff, Cloud, Globe, Users, Bot, Upload, Image as ImageIcon } from 'lucide-react';
 import UserManagement from './UserManagement';
 import AIPromotionSettings from './AIPromotionSettings';
+import { saveSettings, getSettings } from '../store';
 
 interface StoreSettings {
   storeName: string;
@@ -35,25 +36,28 @@ const SettingsPage: React.FC = () => {
     printerPaperSize: '80mm',
   });
 
-  // Load settings from localStorage on mount
+  // Load settings from Firebase/localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('dapurku_settings');
-    if (saved) {
+    const loadSettings = async () => {
       try {
-        const parsed = JSON.parse(saved);
-        setStoreSettings({
-          storeName: parsed.storeName || 'DapurKu',
-          storeTagline: parsed.storeTagline || 'Makanan Rumahan Online',
-          storeAddress: parsed.storeAddress || '',
-          storePhone: parsed.storePhone || '',
-          storeLogo: parsed.storeLogo || '',
-          printerConnection: parsed.printerConnection || 'bluetooth',
-          printerPaperSize: parsed.printerPaperSize || '80mm',
-        });
+        const settings = await getSettings();
+        if (settings) {
+          setStoreSettings({
+            storeName: settings.storeName || 'DapurKu',
+            storeTagline: settings.storeTagline || 'Makanan Rumahan Online',
+            storeAddress: settings.storeAddress || '',
+            storePhone: settings.storePhone || '',
+            storeLogo: settings.storeLogo || '',
+            printerConnection: settings.printerConnection || 'bluetooth',
+            printerPaperSize: settings.printerPaperSize || '80mm',
+          });
+        }
       } catch (error) {
         console.error('Error loading settings:', error);
       }
-    }
+    };
+    
+    loadSettings();
   }, []);
 
   const tabs = [
@@ -77,11 +81,24 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleSaveSettings = () => {
-    localStorage.setItem('dapurku_settings', JSON.stringify(storeSettings));
-    localStorage.setItem('dapurku_logo', storeSettings.storeLogo);
-    setShowSaveSuccess(true);
-    setTimeout(() => setShowSaveSuccess(false), 2000);
+  const handleSaveSettings = async () => {
+    try {
+      // Save to Firebase and localStorage
+      const success = await saveSettings(storeSettings);
+      
+      if (success) {
+        // Also save logo separately for quick access
+        localStorage.setItem('dapurku_logo', storeSettings.storeLogo);
+        
+        setShowSaveSuccess(true);
+        setTimeout(() => setShowSaveSuccess(false), 2000);
+      } else {
+        alert('Gagal menyimpan pengaturan. Silakan coba lagi.');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('Gagal menyimpan pengaturan. Silakan coba lagi.');
+    }
   };
 
   const handleConnectPrinter = async () => {
