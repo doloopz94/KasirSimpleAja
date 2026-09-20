@@ -1,150 +1,8 @@
 @import "tailwindcss";
 
 /* ============================================
-   SIMPLE RESPONSIVE STRATEGY
+   MINIMAL CUSTOM CSS - Let Tailwind Handle Most
    ============================================ */
-
-/* Desktop (> 1024px) - Normal sidebar */
-@media (min-width: 1025px) {
-  aside {
-    width: 16rem !important;
-    display: block !important;
-  }
-  
-  main {
-    margin-left: 16rem !important;
-  }
-  
-  nav.fixed.bottom-0 {
-    display: none !important;
-  }
-}
-
-/* Tablet (768px - 1024px) - Compact sidebar */
-@media (min-width: 768px) and (max-width: 1024px) {
-  aside {
-    width: 12rem !important;
-    display: block !important;
-  }
-  
-  main {
-    margin-left: 12rem !important;
-  }
-  
-  nav.fixed.bottom-0 {
-    display: none !important;
-  }
-  
-  /* Compact sidebar content */
-  aside .p-5 {
-    padding: 0.75rem !important;
-  }
-  
-  aside .p-3 {
-    padding: 0.5rem !important;
-  }
-  
-  aside button {
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.875rem !important;
-  }
-  
-  aside h1 {
-    font-size: 1rem !important;
-  }
-  
-  aside p {
-    font-size: 0.75rem !important;
-  }
-}
-
-/* Mobile (< 768px) - Hide sidebar, use bottom nav */
-@media (max-width: 767px) {
-  aside {
-    display: none !important;
-  }
-  
-  main {
-    margin-left: 0 !important;
-    width: 100% !important;
-  }
-  
-  nav.fixed.bottom-0 {
-    display: flex !important;
-  }
-  
-  /* Compact content */
-  .p-4.lg\:p-6 {
-    padding: 0.75rem !important;
-  }
-  
-  header {
-    padding: 0.5rem 1rem !important;
-  }
-}
-
-/* ============================================
-   LANDSCAPE OVERRIDES
-   ============================================ */
-
-/* Landscape mobile - hide sidebar */
-@media (orientation: landscape) and (max-width: 1024px) {
-  aside {
-    display: none !important;
-  }
-  
-  main {
-    margin-left: 0 !important;
-    width: 100% !important;
-  }
-  
-  nav.fixed.bottom-0 {
-    display: flex !important;
-  }
-  
-  header {
-    padding: 0.5rem 1rem !important;
-  }
-  
-  .p-4.lg\:p-6 {
-    padding: 0.5rem !important;
-  }
-}
-
-/* Landscape tablet - compact sidebar */
-@media (orientation: landscape) and (min-width: 1025px) {
-  aside {
-    width: 12rem !important;
-  }
-  
-  main {
-    margin-left: 12rem !important;
-  }
-  
-  aside .p-5 {
-    padding: 0.75rem !important;
-  }
-  
-  aside .p-3 {
-    padding: 0.5rem !important;
-  }
-  
-  aside button {
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.875rem !important;
-  }
-}
-
-/* ============================================
-   GENERAL STYLES
-   ============================================ */
-
-/* Smooth transitions */
-* {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
@@ -166,7 +24,7 @@
   background: #555;
 }
 
-/* Focus styles */
+/* Focus styles for accessibility */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
@@ -226,4 +84,39 @@ textarea:focus-visible {
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Safe area padding for PWA */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+/* Print styles */
+@media print {
+  nav, aside, header, button {
+    display: none !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
 }
