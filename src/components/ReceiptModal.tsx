@@ -18,7 +18,6 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
   const [isPrinting, setIsPrinting] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  const receiptText = generateReceiptText(transaction, storeName);
   const storeLogo = localStorage.getItem('dapurku_logo') || '';
   
   // Get store info from settings
@@ -28,18 +27,24 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
       const settings = JSON.parse(saved);
       return {
         storeName: settings.storeName || storeName,
+        storeTagline: settings.storeTagline || 'Makanan Rumahan Online',
         storeAddress: settings.storeAddress || '',
         storePhone: settings.storePhone || '',
-        printerConnectionMethod: settings.printerConnectionMethod || 'bluetooth'
+        printerConnection: settings.printerConnection || 'bluetooth',
+        printerPaperSize: settings.printerPaperSize || '80mm'
       };
     }
     return {
       storeName,
+      storeTagline: 'Makanan Rumahan Online',
       storeAddress: '',
       storePhone: '',
-      printerConnectionMethod: 'bluetooth'
+      printerConnection: 'bluetooth',
+      printerPaperSize: '80mm'
     };
   };
+
+  const receiptText = generateReceiptText(transaction, storeName, getStoreInfo().storeTagline);
 
   const handleWhatsApp = () => {
     const phone = transaction.customerPhone?.replace(/\D/g, '');
@@ -113,12 +118,12 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
     
     try {
       const storeInfo = getStoreInfo();
-      const { storeAddress, storePhone, printerConnectionMethod } = storeInfo;
+      const { storeAddress, storePhone, printerConnection } = storeInfo;
       
       // Try to print using the configured printer service
       let printSuccess = false;
       
-      if (printerConnectionMethod === 'bluetooth') {
+      if (printerConnection === 'bluetooth') {
         // Check if Bluetooth printer is connected
         const btState = thermalPrinter.getState();
         if (btState.connected) {
@@ -127,7 +132,7 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
         } else {
           throw new Error('Printer Bluetooth tidak terhubung. Silakan hubungkan terlebih dahulu di Settings.');
         }
-      } else if (printerConnectionMethod === 'wifi') {
+      } else if (printerConnection === 'wifi') {
         // Check if WiFi printer is connected
         const wifiState = wifiPrinter.getState();
         if (wifiState.connected) {
@@ -136,7 +141,7 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
         } else {
           throw new Error('Printer WiFi tidak terhubung. Silakan hubungkan terlebih dahulu di Settings.');
         }
-      } else if (printerConnectionMethod === 'cloud') {
+      } else if (printerConnection === 'cloud') {
         // Check if Cloud printer is connected
         const cloudState = cloudPrinter.getState();
         if (cloudState.connected) {
@@ -260,7 +265,7 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
                   />
                 )}
                 <h1 className="text-lg font-bold text-gray-800">{storeName}</h1>
-                <p className="text-gray-500 text-[10px]">Makanan Rumahan Online</p>
+                <p className="text-gray-500 text-[10px]">{getStoreInfo().storeTagline}</p>
               </div>
 
               <div className="info space-y-1 mb-3 text-[11px]">
@@ -437,8 +442,9 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
   );
 };
 
-function generateReceiptText(transaction: Transaction, storeName: string): string {
+function generateReceiptText(transaction: Transaction, storeName: string, tagline: string = 'Makanan Rumahan Online'): string {
   let text = `🧾 *${storeName}*\n`;
+  text += `_${tagline}_\n`;
   text += `━━━━━━━━━━━━━━━\n`;
   text += `No: #${transaction.id.slice(-6).toUpperCase()}\n`;
   text += `Tanggal: ${formatDate(transaction.date)}\n`;

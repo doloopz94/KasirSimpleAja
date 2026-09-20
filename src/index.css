@@ -1,1 +1,229 @@
 @import "tailwindcss";
+
+/* ============================================
+   SIMPLE RESPONSIVE STRATEGY
+   ============================================ */
+
+/* Desktop (> 1024px) - Normal sidebar */
+@media (min-width: 1025px) {
+  aside {
+    width: 16rem !important;
+    display: block !important;
+  }
+  
+  main {
+    margin-left: 16rem !important;
+  }
+  
+  nav.fixed.bottom-0 {
+    display: none !important;
+  }
+}
+
+/* Tablet (768px - 1024px) - Compact sidebar */
+@media (min-width: 768px) and (max-width: 1024px) {
+  aside {
+    width: 12rem !important;
+    display: block !important;
+  }
+  
+  main {
+    margin-left: 12rem !important;
+  }
+  
+  nav.fixed.bottom-0 {
+    display: none !important;
+  }
+  
+  /* Compact sidebar content */
+  aside .p-5 {
+    padding: 0.75rem !important;
+  }
+  
+  aside .p-3 {
+    padding: 0.5rem !important;
+  }
+  
+  aside button {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  aside h1 {
+    font-size: 1rem !important;
+  }
+  
+  aside p {
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Mobile (< 768px) - Hide sidebar, use bottom nav */
+@media (max-width: 767px) {
+  aside {
+    display: none !important;
+  }
+  
+  main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  nav.fixed.bottom-0 {
+    display: flex !important;
+  }
+  
+  /* Compact content */
+  .p-4.lg\:p-6 {
+    padding: 0.75rem !important;
+  }
+  
+  header {
+    padding: 0.5rem 1rem !important;
+  }
+}
+
+/* ============================================
+   LANDSCAPE OVERRIDES
+   ============================================ */
+
+/* Landscape mobile - hide sidebar */
+@media (orientation: landscape) and (max-width: 1024px) {
+  aside {
+    display: none !important;
+  }
+  
+  main {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  nav.fixed.bottom-0 {
+    display: flex !important;
+  }
+  
+  header {
+    padding: 0.5rem 1rem !important;
+  }
+  
+  .p-4.lg\:p-6 {
+    padding: 0.5rem !important;
+  }
+}
+
+/* Landscape tablet - compact sidebar */
+@media (orientation: landscape) and (min-width: 1025px) {
+  aside {
+    width: 12rem !important;
+  }
+  
+  main {
+    margin-left: 12rem !important;
+  }
+  
+  aside .p-5 {
+    padding: 0.75rem !important;
+  }
+  
+  aside .p-3 {
+    padding: 0.5rem !important;
+  }
+  
+  aside button {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* ============================================
+   GENERAL STYLES
+   ============================================ */
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Focus styles */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+/* Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

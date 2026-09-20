@@ -389,16 +389,16 @@ const Reports: React.FC<Props> = ({ transactions, menuItems, userRole = 'admin',
                 <p>Belum ada transaksi</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto max-w-full">
+                <table className="w-full min-w-[800px]">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Tanggal</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Pelanggan</th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Item</th>
-                      <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Total</th>
-                      <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">Metode</th>
-                      <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Tanggal</th>
+                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Pelanggan</th>
+                      <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Item</th>
+                      <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Total</th>
+                      <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Metode</th>
+                      <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">

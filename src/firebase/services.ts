@@ -277,34 +277,115 @@ export const transactionService = {
 export const settingsService = {
   // Get settings
   get: async (): Promise<any> => {
-    if (!isFirebaseConfigured() || !db) return null;
+    console.log('📥 settingsService.get called');
+    console.log('🔧 isFirebaseConfigured:', isFirebaseConfigured());
+    console.log('🗄️ db instance:', db ? 'exists' : 'null');
+    
+    if (!isFirebaseConfigured() || !db) {
+      console.warn('⚠️ Firebase not configured or db is null');
+      return null;
+    }
     
     try {
       const settingsDoc = doc(db, 'settings', 'app');
+      console.log('📄 Fetching document:', settingsDoc.path);
+      
       const docSnap = await getDoc(settingsDoc);
+      console.log('📸 Document exists:', docSnap.exists());
       
       if (docSnap.exists()) {
-        return docSnap.data();
+        const data = docSnap.data();
+        console.log('✅ Settings retrieved from Firebase:', data);
+        return data;
       }
+      
+      console.warn('⚠️ Settings document does not exist in Firebase');
       return null;
     } catch (error) {
-      console.error('Error getting settings:', error);
+      console.error('❌ Error getting settings from Firebase:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+      }
       return null;
     }
   },
 
   // Save settings
   save: async (settings: any): Promise<boolean> => {
-    if (!isFirebaseConfigured() || !db) return false;
+    console.log('🔥 settingsService.save called');
+    console.log('📝 Settings to save:', settings);
+    console.log('🔧 isFirebaseConfigured:', isFirebaseConfigured());
+    console.log('🗄️ db instance:', db ? 'exists' : 'null');
+    
+    if (!isFirebaseConfigured() || !db) {
+      console.warn('⚠️ Firebase not configured or db is null');
+      return false;
+    }
     
     try {
       const settingsDoc = doc(db, 'settings', 'app');
-      await setDoc(settingsDoc, settings);
+      console.log('📄 Document reference created:', settingsDoc.path);
+      
+      // Check if document exists first
+      const existingDoc = await getDoc(settingsDoc);
+      console.log('🔍 Existing document exists:', existingDoc.exists());
+      
+      if (existingDoc.exists()) {
+        // Document exists, use updateDoc with merge
+        console.log('📝 Updating existing document...');
+        const { updateDoc } = await import('firebase/firestore');
+        await updateDoc(settingsDoc, {
+          ...settings,
+          updatedAt: new Date().toISOString()
+        });
+        console.log('✅ Settings updated successfully');
+      } else {
+        // Document doesn't exist, create it
+        console.log('📝 Creating new document...');
+        await setDoc(settingsDoc, {
+          ...settings,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        console.log('✅ Settings created successfully');
+      }
+      
+      // Verify the document was saved
+      const verifyDoc = await getDoc(settingsDoc);
+      console.log('🔍 Verification - Document exists after save:', verifyDoc.exists());
+      if (verifyDoc.exists()) {
+        console.log('🔍 Verification - Document data:', verifyDoc.data());
+      }
+      
       return true;
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error('❌ Error saving settings to Firebase:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+          code: (error as any).code
+        });
+      }
       return false;
     }
+  },
+
+  // Subscribe to settings changes (real-time)
+  subscribe: (callback: (settings: any) => void) => {
+    if (!isFirebaseConfigured() || !db) return () => {};
+    
+    const settingsDoc = doc(db, 'settings', 'app');
+    return onSnapshot(settingsDoc, (snapshot) => {
+      if (snapshot.exists()) {
+        callback(snapshot.data());
+      }
+    });
   }
 };
 

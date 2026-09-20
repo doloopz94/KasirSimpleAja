@@ -1,12 +1,64 @@
-import React, { useState } from 'react';
-import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X, Wifi, WifiOff, Cloud, Globe, Users, Bot } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X, Wifi, WifiOff, Cloud, Globe, Users, Bot, Upload, Image as ImageIcon } from 'lucide-react';
 import UserManagement from './UserManagement';
 import AIPromotionSettings from './AIPromotionSettings';
+import { saveSettings, getSettings } from '../store';
+
+interface StoreSettings {
+  storeName: string;
+  storeTagline: string;
+  storeAddress: string;
+  storePhone: string;
+  storeLogo: string;
+  printerConnection: 'bluetooth' | 'wifi' | 'cloud';
+  printerPaperSize: '58mm' | '80mm';
+}
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'account' | 'users' | 'qris' | 'printer' | 'receipt' | 'ai'>('account');
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  
+  // Printer state
+  const [printerConnected, setPrinterConnected] = useState(false);
+  const [printerName, setPrinterName] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+  
+  // Store settings state
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
+    storeName: 'DapurKu',
+    storeTagline: 'Makanan Rumahan Online',
+    storeAddress: 'Jl. Contoh No. 123, Jakarta',
+    storePhone: '0812-3456-7890',
+    storeLogo: '',
+    printerConnection: 'bluetooth',
+    printerPaperSize: '80mm',
+  });
+
+  // Load settings from Firebase/localStorage on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settings = await getSettings();
+        if (settings) {
+          setStoreSettings({
+            storeName: settings.storeName || 'DapurKu',
+            storeTagline: settings.storeTagline || 'Makanan Rumahan Online',
+            storeAddress: settings.storeAddress || '',
+            storePhone: settings.storePhone || '',
+            storeLogo: settings.storeLogo || '',
+            printerConnection: settings.printerConnection || 'bluetooth',
+            printerPaperSize: settings.printerPaperSize || '80mm',
+          });
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+      }
+    };
+    
+    loadSettings();
+  }, []);
 
   const tabs = [
     { key: 'account' as const, label: 'Akun Toko', icon: Store },
@@ -16,6 +68,79 @@ const SettingsPage: React.FC = () => {
     { key: 'receipt' as const, label: 'Nota', icon: FileText },
     { key: 'ai' as const, label: 'AI Model', icon: Bot },
   ];
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setStoreSettings({ ...storeSettings, storeLogo: base64 });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    console.log('🖱️ handleSaveSettings clicked');
+    console.log('📋 Current storeSettings:', storeSettings);
+    
+    try {
+      // Save to Firebase and localStorage
+      console.log('📤 Calling saveSettings...');
+      const success = await saveSettings(storeSettings);
+      console.log('📥 saveSettings returned:', success);
+      
+      if (success) {
+        // Also save logo separately for quick access
+        localStorage.setItem('dapurku_logo', storeSettings.storeLogo);
+        console.log('✅ Logo saved to localStorage separately');
+        
+        setShowSaveSuccess(true);
+        setTimeout(() => setShowSaveSuccess(false), 2000);
+        console.log('✅ Settings saved successfully!');
+      } else {
+        console.error('❌ saveSettings returned false');
+        alert('Gagal menyimpan pengaturan. Silakan coba lagi.');
+      }
+    } catch (error) {
+      console.error('❌ Error in handleSaveSettings:', error);
+      alert('Gagal menyimpan pengaturan. Silakan coba lagi.');
+    }
+  };
+
+  const handleConnectPrinter = async () => {
+    setIsConnecting(true);
+    try {
+      // Simulasi koneksi printer (dalam implementasi nyata, ini akan memanggil API printer)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Simulasi berhasil connect
+      setPrinterConnected(true);
+      setPrinterName(`${storeSettings.printerConnection.toUpperCase()} Printer`);
+      
+      alert(`Printer berhasil terhubung via ${storeSettings.printerConnection}!`);
+    } catch (error) {
+      console.error('Error connecting printer:', error);
+      alert('Gagal menghubungkan printer. Silakan coba lagi.');
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleTestPrint = async () => {
+    setIsPrinting(true);
+    try {
+      // Simulasi test print
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      alert('Test print berhasil! Struk contoh telah dicetak.');
+    } catch (error) {
+      console.error('Error test print:', error);
+      alert('Gagal melakukan test print. Silakan coba lagi.');
+    } finally {
+      setIsPrinting(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -66,6 +191,47 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Logo Upload */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <ImageIcon size={14} className="inline mr-1.5" />
+                Logo Toko
+              </label>
+              <div className="flex items-start gap-4">
+                <div className="w-24 h-24 border-2 border-gray-200 rounded-xl flex items-center justify-center overflow-hidden bg-gray-50">
+                  {storeSettings.storeLogo ? (
+                    <img src={storeSettings.storeLogo} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon size={32} className="text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium cursor-pointer transition-colors">
+                    <Upload size={16} />
+                    Upload Logo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Format: JPG, PNG, atau SVG. Maksimal 2MB.
+                  </p>
+                  {storeSettings.storeLogo && (
+                    <button
+                      onClick={() => setStoreSettings({ ...storeSettings, storeLogo: '' })}
+                      className="text-xs text-red-600 hover:text-red-700 mt-2"
+                    >
+                      Hapus Logo
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Store Name */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <Store size={14} className="inline mr-1.5" />
@@ -73,25 +239,47 @@ const SettingsPage: React.FC = () => {
               </label>
               <input
                 type="text"
-                defaultValue="DapurKu"
+                value={storeSettings.storeName}
+                onChange={(e) => setStoreSettings({ ...storeSettings, storeName: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Nama toko Anda"
               />
             </div>
 
+            {/* Tagline */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <FileText size={14} className="inline mr-1.5" />
+                Tagline / Slogan
+              </label>
+              <input
+                type="text"
+                value={storeSettings.storeTagline}
+                onChange={(e) => setStoreSettings({ ...storeSettings, storeTagline: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Makanan Rumahan Online"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Tagline akan muncul di nota dan header aplikasi
+              </p>
+            </div>
+
+            {/* Address */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <Store size={14} className="inline mr-1.5" />
                 Alamat Toko
               </label>
               <textarea
-                defaultValue="Jl. Contoh No. 123, Jakarta"
+                value={storeSettings.storeAddress}
+                onChange={(e) => setStoreSettings({ ...storeSettings, storeAddress: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
                 rows={2}
                 placeholder="Alamat lengkap toko"
               />
             </div>
 
+            {/* Phone */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 <User size={14} className="inline mr-1.5" />
@@ -99,12 +287,25 @@ const SettingsPage: React.FC = () => {
               </label>
               <input
                 type="tel"
-                defaultValue="0812-3456-7890"
+                value={storeSettings.storePhone}
+                onChange={(e) => setStoreSettings({ ...storeSettings, storePhone: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="0812-3456-7890"
               />
             </div>
 
+            {/* Save Button */}
+            <div className="pt-4 border-t border-gray-100">
+              <button
+                onClick={handleSaveSettings}
+                className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors"
+              >
+                <Save size={18} />
+                Simpan Pengaturan Toko
+              </button>
+            </div>
+
+            {/* Logout Button */}
             <div className="pt-4 border-t border-gray-100">
               <button
                 onClick={() => setShowLogoutConfirm(true)}
@@ -171,20 +372,64 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Status Koneksi Printer */}
+            <div className={`rounded-xl p-4 border-2 ${
+              printerConnected 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full ${
+                    printerConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+                  }`}></div>
+                  <div>
+                    <p className="font-semibold text-sm text-gray-800">
+                      Status: {printerConnected ? 'Terhubung' : 'Tidak Terhubung'}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {printerConnected ? printerName : 'Klik tombol di bawah untuk menghubungkan printer'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Metode Koneksi
               </label>
               <div className="grid grid-cols-3 gap-2">
-                <button className="py-3 px-4 rounded-xl border-2 border-blue-500 bg-blue-50 text-blue-700 text-sm font-medium flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => setStoreSettings({ ...storeSettings, printerConnection: 'bluetooth' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                    storeSettings.printerConnection === 'bluetooth'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
                   <Wifi size={16} />
                   Bluetooth
                 </button>
-                <button className="py-3 px-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 text-gray-600 text-sm font-medium flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => setStoreSettings({ ...storeSettings, printerConnection: 'wifi' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                    storeSettings.printerConnection === 'wifi'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
                   <Globe size={16} />
                   WiFi
                 </button>
-                <button className="py-3 px-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 text-gray-600 text-sm font-medium flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => setStoreSettings({ ...storeSettings, printerConnection: 'cloud' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                    storeSettings.printerConnection === 'cloud'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
                   <Cloud size={16} />
                   Cloud Print
                 </button>
@@ -196,13 +441,85 @@ const SettingsPage: React.FC = () => {
                 Ukuran Kertas
               </label>
               <div className="grid grid-cols-2 gap-2">
-                <button className="py-3 px-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 text-gray-600 text-sm font-medium">
+                <button 
+                  onClick={() => setStoreSettings({ ...storeSettings, printerPaperSize: '58mm' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                    storeSettings.printerPaperSize === '58mm'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
                   58mm
                 </button>
-                <button className="py-3 px-4 rounded-xl border-2 border-blue-500 bg-blue-50 text-blue-700 text-sm font-medium">
+                <button 
+                  onClick={() => setStoreSettings({ ...storeSettings, printerPaperSize: '80mm' })}
+                  className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${
+                    storeSettings.printerPaperSize === '80mm'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                  }`}
+                >
                   80mm
                 </button>
               </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3 pt-4 border-t border-gray-200">
+              <button
+                onClick={handleConnectPrinter}
+                disabled={isConnecting}
+                className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors ${
+                  printerConnected
+                    ? 'bg-red-500 hover:bg-red-600 text-white'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isConnecting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Menghubungkan...
+                  </>
+                ) : printerConnected ? (
+                  <>
+                    <X size={18} />
+                    Putuskan Koneksi
+                  </>
+                ) : (
+                  <>
+                    <PrinterIcon size={18} />
+                    Hubungkan Printer
+                  </>
+                )}
+              </button>
+
+              {printerConnected && (
+                <button
+                  onClick={handleTestPrint}
+                  disabled={isPrinting}
+                  className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isPrinting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Mencetak...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={18} />
+                      Test Cetak
+                    </>
+                  )}
+                </button>
+              )}
+
+              <button
+                onClick={handleSaveSettings}
+                className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-200/50 active:scale-[0.98]"
+              >
+                <Save size={20} />
+                Simpan Pengaturan
+              </button>
             </div>
           </div>
         )}
@@ -262,12 +579,9 @@ const SettingsPage: React.FC = () => {
       </div>
 
       {/* Save Button */}
-      {activeTab !== 'users' && activeTab !== 'ai' && (
+      {activeTab !== 'users' && activeTab !== 'ai' && activeTab !== 'account' && (
         <button
-          onClick={() => {
-            setShowSaveSuccess(true);
-            setTimeout(() => setShowSaveSuccess(false), 2000);
-          }}
+          onClick={handleSaveSettings}
           className="w-full py-3.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-200/50 active:scale-[0.98]"
         >
           <Save size={20} />

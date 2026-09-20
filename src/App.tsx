@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Page, MenuItem, Transaction } from './types';
-import { getMenuItems, saveMenuItems, getTransactions, addTransaction, subscribeToMenu, subscribeToTransactions, getFirebaseStatus } from './store';
+import { getMenuItems, saveMenuItems, getTransactions, addTransaction, subscribeToMenu, subscribeToTransactions, getFirebaseStatus, getSettings, saveSettings, subscribeToSettings } from './store';
 import { isFirebaseConfigured } from './firebase/config';
 import Dashboard from './components/Dashboard';
 import MenuManagement from './components/MenuManagement';
@@ -9,6 +9,7 @@ import Reports from './components/Reports';
 import SettingsPage from './components/SettingsPage';
 import LoginPage from './components/LoginPage';
 import PromotionPage from './components/PromotionPage';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { LayoutDashboard, UtensilsCrossed, ShoppingCart, BarChart3, ChefHat, Settings, LogOut, Megaphone, Wifi, WifiOff } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -31,11 +32,21 @@ const App: React.FC = () => {
     return 'DapurKu';
   };
 
+  const getStoreTagline = () => {
+    const saved = localStorage.getItem('dapurku_settings');
+    if (saved) {
+      const settings = JSON.parse(saved);
+      return settings.storeTagline || 'Makanan Rumahan Online';
+    }
+    return 'Makanan Rumahan Online';
+  };
+
   const getStoreLogo = () => {
     return localStorage.getItem('dapurku_logo') || '';
   };
 
   const storeName = getStoreName();
+  const storeTagline = getStoreTagline();
   const storeLogo = getStoreLogo();
 
   // Check if user is already logged in and setup Firebase
@@ -49,11 +60,79 @@ const App: React.FC = () => {
     
     // Load initial data - async load from Firebase/localStorage
     const loadData = async () => {
+      console.log('🚀 Loading initial data...');
+      
       const menu = await getMenuItems();
       setMenuItems(menu);
+      console.log('✅ Menu loaded:', menu.length, 'items');
       
       const trans = await getTransactions();
       setTransactions(trans);
+      console.log('✅ Transactions loaded:', trans.length, 'items');
+      
+      // Load settings from Firebase
+      console.log('📥 Loading settings from Firebase...');
+      const settings = await getSettings();
+      console.log('📦 Settings loaded:', settings);
+      
+      if (settings) {
+        localStorage.setItem('dapurku_settings', JSON.stringify(settings));
+        if (settings.storeLogo) {
+          localStorage.setItem('dapurku_logo', settings.storeLogo);
+        }
+        console.log('✅ Settings cached to localStorage');
+      } else {
+        console.warn('⚠️ No settings found in Firebase, creating default settings...');
+        
+        // Create default settings if not exist
+        const defaultSettings = {
+          storeName: 'DapurKu',
+          storeTagline: 'Makanan Rumahan Online',
+          storeAddress: '',
+          storePhone: '',
+          storeLogo: '',
+          printerConnection: 'bluetooth',
+          printerPaperSize: '80mm',
+          qrisMerchantName: '',
+          qrisMerchantId: '',
+          receiptShowLogo: true,
+          receiptShowStoreName: true,
+          receiptShowAddress: true,
+          receiptShowPhone: true,
+          receiptShowDate: true,
+          receiptShowCustomerName: true,
+          receiptShowFooter: true,
+          receiptFooterText: 'Terima kasih!',
+          createdAt: new Date().toISOString(),
+        };
+        
+        console.log('📝 Default settings to save:', defaultSettings);
+        
+        // Save default settings to Firebase
+        try {
+          console.log('📤 Calling saveSettings...');
+          const success = await saveSettings(defaultSettings);
+          console.log('📥 saveSettings returned:', success);
+          
+          if (success) {
+            console.log('✅ Default settings created and saved to Firebase');
+            localStorage.setItem('dapurku_settings', JSON.stringify(defaultSettings));
+            
+            // Verify by loading again
+            console.log('🔍 Verifying settings were saved...');
+            const verifySettings = await getSettings();
+            console.log('🔍 Verification result:', verifySettings);
+          } else {
+            console.error('❌ Failed to create default settings - saveSettings returned false');
+          }
+        } catch (error) {
+          console.error('❌ Exception while creating default settings:', error);
+          console.error('❌ Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined
+          });
+        }
+      }
     };
     
     loadData();
@@ -72,17 +151,28 @@ const App: React.FC = () => {
         setTransactions(transactions);
       });
       
+      const unsubscribeSettings = subscribeToSettings((settings) => {
+        // Update localStorage cache
+        localStorage.setItem('dapurku_settings', JSON.stringify(settings));
+        if (settings.storeLogo) {
+          localStorage.setItem('dapurku_logo', settings.storeLogo);
+        }
+        // Force re-render by updating state
+        window.location.reload();
+      });
+      
       // Cleanup subscriptions on unmount
       return () => {
         unsubscribeMenu();
         unsubscribeTransactions();
+        unsubscribeSettings();
       };
     }
   }, []);
 
   // Update document title and favicon dynamically
   useEffect(() => {
-    document.title = `${storeName} - Sistem Manajemen Penjualan`;
+    document.title = `${storeName} - ${storeTagline}`;
     
     // Update favicon if logo exists
     if (storeLogo) {
@@ -94,7 +184,7 @@ const App: React.FC = () => {
       }
       link.href = storeLogo;
     }
-  }, [storeName, storeLogo]);
+  }, [storeName, storeTagline, storeLogo]);
 
   const handleLogin = (username: string, role: string) => {
     setIsLoggedIn(true);
@@ -108,6 +198,13 @@ const App: React.FC = () => {
     // Save to Firebase
     await saveMenuItems(items);
   };
+
+  // Update PWA manifest when settings change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).updatePWAManifest) {
+      (window as any).updatePWAManifest();
+    }
+  }, [storeName, storeLogo]);
 
   const handleSaveTransaction = async (transaction: Transaction) => {
     // Save to Firebase and localStorage
@@ -191,9 +288,9 @@ const App: React.FC = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 shadow-sm transform transition-transform duration-300 ${
+      <aside className={`sidebar fixed lg:sticky lg:top-0 inset-y-0 left-0 z-40 bg-white border-r border-gray-100 shadow-sm transform transition-all duration-300 overflow-y-auto flex-shrink-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      }`}>
+      }`} style={{ paddingBottom: '4rem', height: '100vh' }}>
         <div className="p-5 border-b border-gray-100">
           <div className="flex items-center gap-3">
             {storeLogo ? (
@@ -209,7 +306,7 @@ const App: React.FC = () => {
             )}
             <div>
               <h1 className="font-bold text-gray-800 text-lg">{storeName}</h1>
-              <p className="text-xs text-gray-500">Makanan Rumahan</p>
+              <p className="text-xs text-gray-500">{storeTagline}</p>
             </div>
           </div>
         </div>
@@ -244,7 +341,7 @@ const App: React.FC = () => {
         </nav>
 
         {/* Logout Button in Sidebar */}
-        <div className="absolute bottom-16 lg:bottom-0 left-0 right-0 p-3 border-t border-gray-100">
+        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-100 bg-white">
           <button
             onClick={() => setShowLogoutConfirm(true)}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all text-red-600 hover:bg-red-50"
@@ -253,17 +350,10 @@ const App: React.FC = () => {
             <span className="text-sm font-medium">Logout</span>
           </button>
         </div>
-
-        <div className="absolute bottom-16 lg:bottom-16 left-0 right-0 p-4">
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3">
-            <p className="text-xs text-green-700 font-medium">💡 Tips</p>
-            <p className="text-xs text-green-600 mt-1">Gunakan QRIS untuk pembayaran lebih cepat dan aman!</p>
-          </div>
-        </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0">
+      <main className="flex-1 min-w-0 transition-all duration-300">
         {/* Top Bar */}
         <header className="bg-white border-b border-gray-100 px-4 lg:px-6 py-4 sticky top-0 z-20">
           <div className="flex items-center justify-between">
@@ -316,7 +406,7 @@ const App: React.FC = () => {
         </header>
 
         {/* Page Content */}
-        <div className="p-4 lg:p-6">
+        <div className="p-4 lg:p-6 pb-20 lg:pb-6">
           {renderPage()}
         </div>
       </main>
@@ -374,6 +464,9 @@ const App: React.FC = () => {
           </div>
         </>
       )}
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 };

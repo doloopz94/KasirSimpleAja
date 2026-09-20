@@ -1,9 +1,10 @@
 import { MenuItem, Transaction } from './types';
 import { isFirebaseConfigured } from './firebase/config';
-import { menuService, transactionService } from './firebase/services';
+import { menuService, transactionService, settingsService } from './firebase/services';
 
 const MENU_KEY = 'dapurku_menu';
 const TRANSACTIONS_KEY = 'dapurku_transactions';
+const SETTINGS_KEY = 'dapurku_settings';
 
 // Default menu items
 const defaultMenu: MenuItem[] = [
@@ -193,6 +194,70 @@ export const deleteTransaction = async (id: string): Promise<boolean> => {
   }
 };
 
+// Settings
+export const getSettings = async (): Promise<any> => {
+  console.log('📥 getSettings called');
+  console.log('🔧 isFirebaseConfigured:', isFirebaseConfigured());
+  
+  // Try Firebase first
+  if (isFirebaseConfigured()) {
+    console.log('🔥 Firebase is configured, fetching from Firebase...');
+    try {
+      const firebaseSettings = await settingsService.get();
+      console.log('📦 Firebase settings:', firebaseSettings);
+      
+      if (firebaseSettings) {
+        // Cache to localStorage
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(firebaseSettings));
+        console.log('✅ Settings cached to localStorage');
+        return firebaseSettings;
+      } else {
+        console.warn('⚠️ No settings found in Firebase');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching settings from Firebase:', error);
+    }
+  } else {
+    console.warn('⚠️ Firebase is NOT configured');
+  }
+  
+  // Fallback to localStorage
+  const data = localStorage.getItem(SETTINGS_KEY);
+  if (data) {
+    console.log('✅ Settings loaded from localStorage fallback');
+    return JSON.parse(data);
+  }
+  
+  console.warn('⚠️ No settings found anywhere');
+  return null;
+};
+
+export const saveSettings = async (settings: any): Promise<boolean> => {
+  console.log('💾 saveSettings called from store.ts');
+  console.log('📦 Settings object:', settings);
+  
+  // Save to localStorage first (for immediate UI update)
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  console.log('✅ Settings saved to localStorage');
+  
+  // Save to Firebase
+  if (isFirebaseConfigured()) {
+    console.log('🔥 Firebase is configured, calling settingsService.save...');
+    try {
+      const result = await settingsService.save(settings);
+      console.log('📊 settingsService.save result:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error saving settings to Firebase:', error);
+      return false;
+    }
+  } else {
+    console.warn('⚠️ Firebase is NOT configured, only saving to localStorage');
+  }
+  
+  return true;
+};
+
 // Firebase Real-time Subscriptions
 export const subscribeToMenu = (callback: (items: MenuItem[]) => void) => {
   if (!isFirebaseConfigured()) return () => {};
@@ -202,6 +267,11 @@ export const subscribeToMenu = (callback: (items: MenuItem[]) => void) => {
 export const subscribeToTransactions = (callback: (transactions: Transaction[]) => void) => {
   if (!isFirebaseConfigured()) return () => {};
   return transactionService.subscribe(callback);
+};
+
+export const subscribeToSettings = (callback: (settings: any) => void) => {
+  if (!isFirebaseConfigured()) return () => {};
+  return settingsService.subscribe(callback);
 };
 
 // Utility functions
@@ -234,3 +304,55 @@ export const getFirebaseStatus = () => {
     mode: isFirebaseConfigured() ? 'Firebase' : 'localStorage'
   };
 };
+
+// Manual test function for debugging - can be called from browser console
+export const testSettingsSync = async () => {
+  console.log('🧪 === MANUAL SETTINGS SYNC TEST ===');
+  console.log('🔧 isFirebaseConfigured:', isFirebaseConfigured());
+  
+  if (!isFirebaseConfigured()) {
+    console.error('❌ Firebase is not configured!');
+    return;
+  }
+  
+  console.log('📥 Step 1: Loading current settings...');
+  const currentSettings = await getSettings();
+  console.log('📦 Current settings:', currentSettings);
+  
+  console.log('📝 Step 2: Creating test settings...');
+  const testSettings = {
+    storeName: 'Test Store ' + Date.now(),
+    storeTagline: 'Test Tagline',
+    storeAddress: 'Test Address',
+    storePhone: '123456789',
+    storeLogo: '',
+    printerConnection: 'bluetooth',
+    printerPaperSize: '80mm',
+    testTimestamp: new Date().toISOString(),
+  };
+  
+  console.log('📤 Step 3: Saving test settings to Firebase...');
+  const success = await saveSettings(testSettings);
+  console.log('📥 Save result:', success);
+  
+  if (success) {
+    console.log('✅ Step 4: Verifying settings were saved...');
+    const verifySettings = await getSettings();
+    console.log('🔍 Verified settings:', verifySettings);
+    
+    if (verifySettings && verifySettings.storeName === testSettings.storeName) {
+      console.log('✅✅✅ SETTINGS SYNC IS WORKING! ✅✅✅');
+    } else {
+      console.error('❌ Settings were saved but verification failed!');
+    }
+  } else {
+    console.error('❌ Failed to save settings!');
+  }
+  
+  console.log('🧪 === TEST COMPLETE ===');
+};
+
+// Export to window for console access
+if (typeof window !== 'undefined') {
+  (window as any).testSettingsSync = testSettingsSync;
+}
