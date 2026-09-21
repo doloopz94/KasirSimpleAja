@@ -44,6 +44,8 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
     };
   };
 
+  const [previewSize, setPreviewSize] = useState<'58mm' | '80mm'>(getStoreInfo().printerPaperSize as '58mm' | '80mm');
+
   const receiptText = generateReceiptText(transaction, storeName, getStoreInfo().storeTagline);
 
   const handleWhatsApp = () => {
@@ -252,10 +254,66 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
           </button>
         </div>
 
+        {/* Paper Size Preview Toggle */}
+        <div className="px-4 pt-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+            <p className="text-xs font-semibold text-blue-900 mb-2">📄 Preview Ukuran Kertas</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPreviewSize('58mm')}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                  previewSize === '58mm'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'bg-white text-blue-700 hover:bg-blue-100 border border-blue-200'
+                }`}
+              >
+                58mm (Kecil)
+              </button>
+              <button
+                onClick={() => setPreviewSize('80mm')}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                  previewSize === '80mm'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'bg-white text-blue-700 hover:bg-blue-100 border border-blue-200'
+                }`}
+              >
+                80mm (Standar)
+              </button>
+            </div>
+            <p className="text-[10px] text-blue-700 mt-2 text-center">
+              {previewSize === '58mm' 
+                ? '⚠️ Ukuran kecil - beberapa teks mungkin terpotong' 
+                : '✅ Ukuran standar - tampilan optimal'}
+            </p>
+          </div>
+        </div>
+
         {/* Receipt Preview */}
         <div className="flex-1 overflow-y-auto p-4">
           <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-            <div ref={receiptRef} className="font-mono text-xs">
+            {/* Paper Size Indicator */}
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-300">
+              <span className="text-xs font-semibold text-gray-700">PREVIEW STRUK</span>
+              <span className={`text-xs font-bold px-2 py-1 rounded ${
+                previewSize === '58mm' 
+                  ? 'bg-orange-100 text-orange-700' 
+                  : 'bg-green-100 text-green-700'
+              }`}>
+                {previewSize}
+              </span>
+            </div>
+            
+            {/* Receipt Container with Paper Size Width */}
+            <div 
+              className="mx-auto bg-white border-2 border-dashed border-gray-300 rounded-lg shadow-lg overflow-hidden"
+              style={{
+                width: previewSize === '58mm' ? '220px' : '300px',
+                maxWidth: '100%'
+              }}
+            >
+              {/* Paper Texture Effect */}
+              <div className="bg-gradient-to-b from-gray-50 to-white p-4">
+                <div ref={receiptRef} className="font-mono text-xs">
               <div className="header text-center border-b-2 border-dashed border-gray-400 pb-3 mb-3">
                 {storeLogo && (
                   <img 
@@ -357,6 +415,8 @@ const ReceiptModal: React.FC<Props> = ({ transaction, storeName, onClose }) => {
               <div className="footer text-center mt-3 pt-2 border-t border-dashed border-gray-400 text-[9px] text-gray-500">
                 <p>Terima kasih atas pesanan Anda!</p>
                 <p className="mt-0.5">--- {storeName} ---</p>
+              </div>
+                </div>
               </div>
             </div>
           </div>

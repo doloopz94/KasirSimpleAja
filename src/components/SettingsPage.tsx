@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, QrCode, Printer as PrinterIcon, Receipt, Shield, X, Wifi, WifiOff, Cloud, Globe, Users, Bot, Upload, Image as ImageIcon } from 'lucide-react';
 import UserManagement from './UserManagement';
 import AIPromotionSettings from './AIPromotionSettings';
+import ReceiptPreview from './ReceiptPreview';
 import { saveSettings, getSettings } from '../store';
+import { thermalPrinter } from '../services/ThermalPrinter';
+import { Transaction } from '../types';
 
 interface StoreSettings {
   storeName: string;
@@ -36,6 +39,56 @@ const SettingsPage: React.FC = () => {
     printerPaperSize: '80mm',
   });
 
+  // Receipt settings state
+  const [receiptSettings, setReceiptSettings] = useState({
+    showLogo: true,
+    showStoreName: true,
+    showAddress: true,
+    showPhone: true,
+    showDate: true,
+    showCustomerName: true,
+    showFooter: true,
+    footerText: 'Terima kasih atas pesanan Anda!',
+  });
+
+  // Preview paper size state
+  const [previewPaperSize, setPreviewPaperSize] = useState<'58mm' | '80mm'>('80mm');
+
+  // Sample transaction for preview
+  const sampleTransaction: Transaction = {
+    id: 'sample-' + Date.now(),
+    items: [
+      {
+        menuItem: { id: '1', name: 'Nasi Goreng Spesial', price: 25000, category: 'Makanan', description: '', available: true },
+        quantity: 2,
+        subtotal: 50000
+      },
+      {
+        menuItem: { id: '2', name: 'Es Teh Manis', price: 5000, category: 'Minuman', description: '', available: true },
+        quantity: 3,
+        subtotal: 15000
+      },
+      {
+        menuItem: { id: '3', name: 'Kerupuk', price: 3000, category: 'Pelengkap', description: '', available: true },
+        quantity: 2,
+        subtotal: 6000
+      }
+    ],
+    subtotal: 71000,
+    discount: 0,
+    discountAmount: 0,
+    deliveryFee: 5000,
+    total: 76000,
+    paymentAmount: 80000,
+    change: 4000,
+    customerName: 'Budi Santoso',
+    customerPhone: '081234567890',
+    paymentMethod: 'cash',
+    status: 'paid',
+    date: new Date().toISOString(),
+    notes: 'Pedas sedang'
+  };
+
   // Load settings from Firebase/localStorage on mount
   useEffect(() => {
     const loadSettings = async () => {
@@ -51,6 +104,14 @@ const SettingsPage: React.FC = () => {
             printerConnection: settings.printerConnection || 'bluetooth',
             printerPaperSize: settings.printerPaperSize || '80mm',
           });
+          
+          // Load receipt settings
+          if (settings.receiptSettings) {
+            setReceiptSettings(settings.receiptSettings);
+          }
+          
+          // Set preview paper size from printer settings
+          setPreviewPaperSize(settings.printerPaperSize || '80mm');
         }
       } catch (error) {
         console.error('Error loading settings:', error);
@@ -84,11 +145,18 @@ const SettingsPage: React.FC = () => {
   const handleSaveSettings = async () => {
     console.log('🖱️ handleSaveSettings clicked');
     console.log('📋 Current storeSettings:', storeSettings);
+    console.log('📋 Current receiptSettings:', receiptSettings);
     
     try {
+      // Combine store settings and receipt settings
+      const combinedSettings = {
+        ...storeSettings,
+        receiptSettings: receiptSettings,
+      };
+      
       // Save to Firebase and localStorage
       console.log('📤 Calling saveSettings...');
-      const success = await saveSettings(storeSettings);
+      const success = await saveSettings(combinedSettings);
       console.log('📥 saveSettings returned:', success);
       
       if (success) {
@@ -112,17 +180,35 @@ const SettingsPage: React.FC = () => {
   const handleConnectPrinter = async () => {
     setIsConnecting(true);
     try {
-      // Simulasi koneksi printer (dalam implementasi nyata, ini akan memanggil API printer)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simulasi berhasil connect
-      setPrinterConnected(true);
-      setPrinterName(`${storeSettings.printerConnection.toUpperCase()} Printer`);
-      
-      alert(`Printer berhasil terhubung via ${storeSettings.printerConnection}!`);
+      if (storeSettings.printerConnection === 'bluetooth') {
+        // Real Bluetooth connection
+        if (!thermalPrinter.isSupported()) {
+          throw new Error('Web Bluetooth tidak didukung di browser ini. Gunakan Chrome/Edge.');
+        }
+        
+        // Set paper size
+        thermalPrinter.setPaperSize(storeSettings.printerPaperSize);
+        
+        // Connect to printer
+        await thermalPrinter.connect();
+        
+        const state = thermalPrinter.getState();
+        setPrinterConnected(state.connected);
+        setPrinterName(state.deviceName);
+        
+        alert(`Printer Bluetooth berhasil terhubung: ${state.deviceName}`);
+      } else {
+        // Simulasi untuk WiFi/Cloud (belum diimplementasi)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setPrinterConnected(true);
+        setPrinterName(`${storeSettings.printerConnection.toUpperCase()} Printer`);
+        alert(`Printer berhasil terhubung via ${storeSettings.printerConnection}!`);
+      }
     } catch (error) {
       console.error('Error connecting printer:', error);
-      alert('Gagal menghubungkan printer. Silakan coba lagi.');
+      setPrinterConnected(false);
+      setPrinterName(null);
+      alert(`Gagal menghubungkan printer: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsConnecting(false);
     }
@@ -131,12 +217,47 @@ const SettingsPage: React.FC = () => {
   const handleTestPrint = async () => {
     setIsPrinting(true);
     try {
-      // Simulasi test print
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      alert('Test print berhasil! Struk contoh telah dicetak.');
+      if (storeSettings.printerConnection === 'bluetooth') {
+        // Real Bluetooth print
+        const testTransaction = {
+          id: 'test-' + Date.now(),
+          date: new Date().toISOString(),
+          customerName: 'Test Customer',
+          customerPhone: '081234567890',
+          items: [
+            {
+              menuItem: { id: '1', name: 'Nasi Goreng', price: 20000, category: 'Makanan', description: '', available: true },
+              quantity: 2,
+              subtotal: 40000
+            },
+            {
+              menuItem: { id: '2', name: 'Es Teh', price: 5000, category: 'Minuman', description: '', available: true },
+              quantity: 1,
+              subtotal: 5000
+            }
+          ],
+          total: 45000,
+          deliveryFee: 0,
+          paymentMethod: 'cash' as const,
+          status: 'paid' as const
+        };
+
+        await thermalPrinter.printReceipt(
+          storeSettings.storeName,
+          storeSettings.storeAddress,
+          storeSettings.storePhone,
+          testTransaction
+        );
+
+        alert('Test print berhasil! Struk contoh telah dicetak.');
+      } else {
+        // Simulasi untuk WiFi/Cloud
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        alert('Test print berhasil! Struk contoh telah dicetak.');
+      }
     } catch (error) {
       console.error('Error test print:', error);
-      alert('Gagal melakukan test print. Silakan coba lagi.');
+      alert(`Gagal melakukan test print: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsPrinting(false);
     }
@@ -531,27 +652,78 @@ const SettingsPage: React.FC = () => {
               <Receipt size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm">
                 <p className="font-semibold text-green-900 mb-1">Pengaturan Tampilan Nota</p>
-                <p className="text-green-700 text-xs">Atur informasi apa saja yang ditampilkan pada struk/nota</p>
+                <p className="text-green-700 text-xs">Atur informasi apa saja yang ditampilkan pada struk/nota dan lihat preview</p>
               </div>
+            </div>
+
+            {/* Paper Size Toggle for Preview */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-sm font-semibold text-blue-900 mb-3">📄 Preview Ukuran Kertas</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPreviewPaperSize('58mm')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                    previewPaperSize === '58mm'
+                      ? 'bg-blue-500 text-white shadow-sm'
+                      : 'bg-white text-blue-700 hover:bg-blue-100 border border-blue-200'
+                  }`}
+                >
+                  58mm (Kecil)
+                </button>
+                <button
+                  onClick={() => setPreviewPaperSize('80mm')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                    previewPaperSize === '80mm'
+                      ? 'bg-blue-500 text-white shadow-sm'
+                      : 'bg-white text-blue-700 hover:bg-blue-100 border border-blue-200'
+                  }`}
+                >
+                  80mm (Standar)
+                </button>
+              </div>
+            </div>
+
+            {/* Receipt Preview */}
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <ReceiptPreview
+                transaction={sampleTransaction}
+                storeName={storeSettings.storeName}
+                storeTagline={storeSettings.storeTagline}
+                storeAddress={storeSettings.storeAddress}
+                storePhone={storeSettings.storePhone}
+                paperSize={previewPaperSize}
+                showLogo={receiptSettings.showLogo}
+                showStoreName={receiptSettings.showStoreName}
+                showAddress={receiptSettings.showAddress}
+                showPhone={receiptSettings.showPhone}
+                showDate={receiptSettings.showDate}
+                showCustomerName={receiptSettings.showCustomerName}
+                showFooter={receiptSettings.showFooter}
+                footerText={receiptSettings.footerText}
+              />
             </div>
 
             <div className="space-y-3">
               <p className="text-sm font-semibold text-gray-700">Informasi yang Ditampilkan</p>
               
               {[
-                { key: 'logo', label: 'Logo Toko', checked: true },
-                { key: 'storeName', label: 'Nama Toko', checked: true },
-                { key: 'address', label: 'Alamat Toko', checked: true },
-                { key: 'phone', label: 'Nomor Telepon', checked: true },
-                { key: 'date', label: 'Tanggal & Waktu', checked: true },
-                { key: 'customer', label: 'Nama Pelanggan', checked: true },
-                { key: 'footer', label: 'Footer Nota', checked: true },
+                { key: 'showLogo', label: 'Logo Toko' },
+                { key: 'showStoreName', label: 'Nama Toko' },
+                { key: 'showAddress', label: 'Alamat Toko' },
+                { key: 'showPhone', label: 'Nomor Telepon' },
+                { key: 'showDate', label: 'Tanggal & Waktu' },
+                { key: 'showCustomerName', label: 'Nama Pelanggan' },
+                { key: 'showFooter', label: 'Footer Nota' },
               ].map(item => (
                 <label key={item.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
                   <span className="text-sm text-gray-700">{item.label}</span>
                   <input
                     type="checkbox"
-                    defaultChecked={item.checked}
+                    checked={(receiptSettings as any)[item.key]}
+                    onChange={(e) => setReceiptSettings({
+                      ...receiptSettings,
+                      [item.key]: e.target.checked
+                    })}
                     className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 cursor-pointer"
                   />
                 </label>
@@ -563,7 +735,11 @@ const SettingsPage: React.FC = () => {
                 Teks Footer
               </label>
               <textarea
-                defaultValue="Terima kasih atas kunjungan Anda!"
+                value={receiptSettings.footerText}
+                onChange={(e) => setReceiptSettings({
+                  ...receiptSettings,
+                  footerText: e.target.value
+                })}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
                 rows={2}
                 placeholder="Terima kasih atas kunjungan Anda!"
