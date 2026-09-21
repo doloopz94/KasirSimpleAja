@@ -3,6 +3,7 @@ import { User, CreditCard, Printer, FileText, Save, CheckCircle, LogOut, Store, 
 import UserManagement from './UserManagement';
 import AIPromotionSettings from './AIPromotionSettings';
 import { saveSettings, getSettings } from '../store';
+import { thermalPrinter } from '../services/ThermalPrinter';
 
 interface StoreSettings {
   storeName: string;
@@ -112,17 +113,35 @@ const SettingsPage: React.FC = () => {
   const handleConnectPrinter = async () => {
     setIsConnecting(true);
     try {
-      // Simulasi koneksi printer (dalam implementasi nyata, ini akan memanggil API printer)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simulasi berhasil connect
-      setPrinterConnected(true);
-      setPrinterName(`${storeSettings.printerConnection.toUpperCase()} Printer`);
-      
-      alert(`Printer berhasil terhubung via ${storeSettings.printerConnection}!`);
+      if (storeSettings.printerConnection === 'bluetooth') {
+        // Real Bluetooth connection
+        if (!thermalPrinter.isSupported()) {
+          throw new Error('Web Bluetooth tidak didukung di browser ini. Gunakan Chrome/Edge.');
+        }
+        
+        // Set paper size
+        thermalPrinter.setPaperSize(storeSettings.printerPaperSize);
+        
+        // Connect to printer
+        await thermalPrinter.connect();
+        
+        const state = thermalPrinter.getState();
+        setPrinterConnected(state.connected);
+        setPrinterName(state.deviceName);
+        
+        alert(`Printer Bluetooth berhasil terhubung: ${state.deviceName}`);
+      } else {
+        // Simulasi untuk WiFi/Cloud (belum diimplementasi)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setPrinterConnected(true);
+        setPrinterName(`${storeSettings.printerConnection.toUpperCase()} Printer`);
+        alert(`Printer berhasil terhubung via ${storeSettings.printerConnection}!`);
+      }
     } catch (error) {
       console.error('Error connecting printer:', error);
-      alert('Gagal menghubungkan printer. Silakan coba lagi.');
+      setPrinterConnected(false);
+      setPrinterName(null);
+      alert(`Gagal menghubungkan printer: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsConnecting(false);
     }
@@ -131,12 +150,47 @@ const SettingsPage: React.FC = () => {
   const handleTestPrint = async () => {
     setIsPrinting(true);
     try {
-      // Simulasi test print
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      alert('Test print berhasil! Struk contoh telah dicetak.');
+      if (storeSettings.printerConnection === 'bluetooth') {
+        // Real Bluetooth print
+        const testTransaction = {
+          id: 'test-' + Date.now(),
+          date: new Date().toISOString(),
+          customerName: 'Test Customer',
+          customerPhone: '081234567890',
+          items: [
+            {
+              menuItem: { id: '1', name: 'Nasi Goreng', price: 20000, category: 'Makanan', description: '', available: true },
+              quantity: 2,
+              subtotal: 40000
+            },
+            {
+              menuItem: { id: '2', name: 'Es Teh', price: 5000, category: 'Minuman', description: '', available: true },
+              quantity: 1,
+              subtotal: 5000
+            }
+          ],
+          total: 45000,
+          deliveryFee: 0,
+          paymentMethod: 'cash' as const,
+          status: 'paid' as const
+        };
+
+        await thermalPrinter.printReceipt(
+          storeSettings.storeName,
+          storeSettings.storeAddress,
+          storeSettings.storePhone,
+          testTransaction
+        );
+
+        alert('Test print berhasil! Struk contoh telah dicetak.');
+      } else {
+        // Simulasi untuk WiFi/Cloud
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        alert('Test print berhasil! Struk contoh telah dicetak.');
+      }
     } catch (error) {
       console.error('Error test print:', error);
-      alert('Gagal melakukan test print. Silakan coba lagi.');
+      alert(`Gagal melakukan test print: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsPrinting(false);
     }

@@ -38,12 +38,14 @@ class ThermalPrinterService {
     }
 
     try {
-      // Request Bluetooth device
+      // Request Bluetooth device - use acceptAllDevices for better compatibility
       this.device = await navigator.bluetooth.requestDevice({
-        filters: [
-          { services: ['000018f0-0000-1000-8000-00805f9b34fb'] }, // Standard printer service
-        ],
-        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+        acceptAllDevices: true,
+        optionalServices: [
+          '000018f0-0000-1000-8000-00805f9b34fb', // Standard printer service
+          '0000ff00-0000-1000-8000-00805f9b34fb', // Common printer service
+          'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Another common printer service
+        ]
       });
 
       // Handle disconnection
@@ -64,11 +66,53 @@ class ThermalPrinterService {
         throw new Error('Gagal terhubung ke printer');
       }
 
-      // Get primary service
-      const service = await this.server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-      
-      // Get characteristic for writing
-      this.characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+      // Try to get primary service - try multiple common UUIDs
+      let service = null;
+      const serviceUUIDs = [
+        '000018f0-0000-1000-8000-00805f9b34fb', // Standard printer service
+        '0000ff00-0000-1000-8000-00805f9b34fb', // Common printer service
+        'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Another common printer service
+      ];
+
+      for (const uuid of serviceUUIDs) {
+        try {
+          service = await this.server.getPrimaryService(uuid);
+          console.log('Found service:', uuid);
+          break;
+        } catch (e) {
+          console.log('Service not found:', uuid);
+          continue;
+        }
+      }
+
+      if (!service) {
+        throw new Error('Printer service tidak ditemukan. Pastikan printer kompatibel.');
+      }
+
+      // Try to get characteristic for writing - try multiple common UUIDs
+      let characteristic = null;
+      const characteristicUUIDs = [
+        '00002af1-0000-1000-8000-00805f9b34fb', // Standard write characteristic
+        '00002a01-0000-1000-8000-00805f9b34fb', // Common write characteristic
+        '0000ff01-0000-1000-8000-00805f9b34fb', // Another common write characteristic
+      ];
+
+      for (const uuid of characteristicUUIDs) {
+        try {
+          characteristic = await service.getCharacteristic(uuid);
+          console.log('Found characteristic:', uuid);
+          break;
+        } catch (e) {
+          console.log('Characteristic not found:', uuid);
+          continue;
+        }
+      }
+
+      if (!characteristic) {
+        throw new Error('Write characteristic tidak ditemukan. Pastikan printer kompatibel.');
+      }
+
+      this.characteristic = characteristic;
 
       this.state.connected = true;
       this.state.deviceName = this.device.name || 'Thermal Printer';
