@@ -15,13 +15,6 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ''
 };
 
-// Initialize Firebase
-const firebaseApp = initializeApp(firebaseConfig);
-
-// Initialize Firebase services
-const firestoreDb = getFirestore(firebaseApp);
-const firebaseStorage = getStorage(firebaseApp);
-
 // Check if Firebase is configured
 export const isFirebaseConfigured = (): boolean => {
   return Boolean(
